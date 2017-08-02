@@ -38,19 +38,17 @@ sub create_table {
 }
 
 sub insert {
-    my ($chat_id, $token, $authorize) = sanitize(@_);
-    print Dumper($token);
+    my ($chat_id, $token, $authorize) = @{sanitize(\@_)};
     my $stmt = qq(
         INSERT INTO $table 
         (messageid, token, loginid, currency, balance)
         VALUES($chat_id, "$token", "$authorize->{loginid}", "$authorize->{currency}", "$authorize->{balance}");
     );
-    print $stmt . "\n";
     $dbh->do($stmt) or die $DBI::errstr;
 }
 
 sub update {
-    my ($chat_id, $field, $value) = sanitize(@_);
+    my ($chat_id, $field, $value) = @{sanitize(\@_)};
     my $stmt = qq(
         UPDATE $table SET $field = $value where messageid=$chat_id;
     );
@@ -58,15 +56,18 @@ sub update {
 }
 
 sub get {
-    my ($chat_id, $field) = sanitize(@_);
-    $field = $field || "*";
+    my ($chat_id, $fields) = @{sanitize(\@_)};
+    $fields = $fields || "*";
+    if (ref($fields) eq "ARRAY") {
+        $fields = join ", ", @$fields;
+    }
     my $stmt = qq(
-        SELECT $field FROM $table WHERE messageid = $chat_id;
+        SELECT $fields FROM $table WHERE messageid = $chat_id;
     );
     my $sth    = $dbh->prepare($stmt);
     my $rv     = $sth->execute() or die $DBI::errstr;
     my @result = $sth->fetchrow_array();
-    return $result[0];
+    return @result;
 }
 
 sub row_exists {
@@ -91,9 +92,11 @@ sub disconnect {
 sub sanitize {
     my $input = shift;
     if (ref($input) eq "ARRAY") {
-        foreach my $param (@$input) {
+        my @array = @$input;
+        foreach my $param (@array) {
             $param = sanitize($param);
         }
+        @$input = @array;
     } elsif (ref($input) eq "HASH") {
         foreach my $key (keys %$input) {
             $input->{$key} = sanitize($input->{$key});

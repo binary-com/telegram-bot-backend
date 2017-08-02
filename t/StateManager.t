@@ -7,7 +7,7 @@ use Data::Dumper;
 
 sub start {
     set_table("testtable");
-    remove_table();    
+    remove_table();
     create_table();
     insert(
         1, "abcd",
@@ -15,8 +15,29 @@ sub start {
             loginid  => "1234",
             currency => "USD",
             balance  => 500
-        });    
-    # check_sanitizer();
+        });
+    insert(
+        2, "xyz",
+        {
+            loginid  => "567",
+            currency => "USD",
+            balance  => 1000
+        });
+    # Get single field.
+    my @result = get(1, "loginid");
+    ok($result[0] eq "1234");
+    # Get multiple fields
+    @result = get(1, ["loginid", "currency"]);
+    ok($result[0] eq '1234');
+    ok($result[1] eq 'USD');
+    # Get all fields
+    @result = get(2);
+    ok($result[0] == 2);
+    ok($result[1] eq "xyz");
+    ok($result[2] eq "567");
+    ok($result[3] eq "USD");
+    ok($result[4] == 1000);
+    check_sanitizer();
 }
 
 sub check_sanitizer {
