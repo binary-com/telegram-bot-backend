@@ -1,4 +1,4 @@
-# Telegram Bot
+# Telegram Bot Backend
 
 This repository is for communicating with the telegram api and responding to the user query.
 
@@ -16,6 +16,7 @@ Files and associated functions:
 ---
 
 - *bin/app.pl* : Driver program.
+- *bin/listener.pl* : Creates webhook for telegram.
 - *GetUpdates.pm* : Gets messages from telegram API's `getUpdates` endpoint.
 - *SendMessage.pm* : Used for responding back to user. Sends message to the chats using `sendMessage` endpoint.
 - *StateManager.pm* : Currently does nothing. It should handle the state of every chat.
@@ -25,7 +26,7 @@ Files and associated functions:
 
 To Do:
 ---
-- Implement StateManager.pm, maybe try Redis?
+- Implement StateManager.pm, ~~maybe try Redis?~~ (Using sqlite instead)
 - Better error handling. Maybe create a separate module just for error handling?
 - Retries on error in SendMessage.pm & WSBridge.pm.
 - ~~Use webhooks to get messages.~~
