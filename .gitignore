@@ -1,3 +1,4 @@
 bin/hypnotoad.pid
 bin/*.log
 curl.cmd
+Users.db
