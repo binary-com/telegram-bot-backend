@@ -6,15 +6,23 @@ use FindBin;    # locate this script
 use lib "$FindBin::Bin/../lib";
 use Binary::TelegramBot::TelegramCommandHandler qw(process_message);
 
-app->config(hypnotoad => {listen => ['http://*:3000']});
-my $log = Mojo::Log->new(
-    path  => 'bin/mojo.log',
-    level => 'warn'
-);
+app->config(
+    hypnotoad => {
+        listen             => ['http://*:3000'],
+        workers            => 10,
+        inactivity_timeout => 3600,
+        heartbeat_timeout  => 120,
+    });
+app->log(
+    Mojo::Log->new(
+        path  => 'bin/mojo.log',
+        level => 'warn'
+    ));
 my $processed_messages = {};
 
 sub listener {
     any '/telegram' => sub {
+        warn "Hello";
         my $self      = shift;
         my $req       = $self->req;
         my $msg_obj   = decode_json($req->content->asset->{content});
