@@ -15,14 +15,15 @@ app->config(
     });
 app->log(
     Mojo::Log->new(
-        path  => 'bin/mojo.log',
+        path  => '/tmp/mojo.log',
         level => 'warn'
     ));
+
+my $log = app->log;
 my $processed_messages = {};
 
 sub listener {
     any '/telegram' => sub {
-        warn "Hello";
         my $self      = shift;
         my $req       = $self->req;
         my $msg_obj   = decode_json($req->content->asset->{content});
