@@ -6,13 +6,14 @@ use Test::More "no_plan";
 use JSON qw | decode_json encode_json|;
 use Binary::TelegramBot::Helper::Await qw (await_response);
 use Binary::TelegramBot::WSBridge qw(send_ws_request is_authenticated get_property);
+use Data::Dumper;
 
 sub start {
     my $creds = {
         chat_id => '123',
         token   => $ENV{"BINARY_TOKEN"}};
     authorize($creds);
-    # get_balance($creds);
+    get_balance($creds);
     test_callback($creds);
 }
 

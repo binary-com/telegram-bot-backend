@@ -13,7 +13,7 @@ my $driver = "SQLite";
 my $db     = "Users.db";
 my $dbh    = DBI->connect("DBI:$driver:dbname=$db", "", "", {RaiseError => 1})
     or die $DBI::errstr;
-my $table = '';
+my $table = 'users';    #Default is users
 
 sub set_table {
     $table = sanitize(shift);
@@ -25,7 +25,7 @@ sub get_table {
 
 sub create_table {
     my $stmt = qq(
-        CREATE TABLE $table
+        CREATE TABLE IF NOT EXISTS $table
         (
             messageid INT PRIMARY KEY NOT NULL,
             token TEXT NOT NULL,
@@ -50,7 +50,7 @@ sub insert {
 sub update {
     my ($chat_id, $field, $value) = @{sanitize(\@_)};
     my $stmt = qq(
-        UPDATE $table SET $field = $value where messageid=$chat_id;
+        UPDATE $table SET $field = "$value" where messageid=$chat_id;
     );
     $dbh->do($stmt) or die $DBI::errstr;
 }
@@ -91,6 +91,7 @@ sub disconnect {
 # Recursive function to sanitize scalar, arrays, and hashes even if they're encapsulated within each other.
 sub sanitize {
     my $input = shift;
+    # return unless $input;
     if (ref($input) eq "ARRAY") {
         my @array = @$input;
         foreach my $param (@array) {
@@ -102,7 +103,8 @@ sub sanitize {
             $input->{$key} = sanitize($input->{$key});
         }
     } else {
-        $input =~ s/['"\\]//g;
+        $input =~ s/'/\\'/g;
+        $input =~ s/"/\\"/g;
     }
     return $input;
 }

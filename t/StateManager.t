@@ -37,29 +37,34 @@ sub start {
     ok($result[2] eq "567");
     ok($result[3] eq "USD");
     ok($result[4] == 1000);
+    # Check if row already exists
+    ok(row_exists(1) == 1);
+    update(1, "balance", 1000);
+    ok(get(1,"balance") == 1000);
     check_sanitizer();
 }
 
 sub check_sanitizer {
     ok(sanitize(1234) == 1234);
-    ok(sanitize("abcd'") eq "abcd");
-    ok(sanitize('abcd"') eq "abcd");
+    print sanitize("abcd'");
+    ok(sanitize("abcd'") eq "abcd\\'");
+    ok(sanitize('abcd"') eq "abcd\\\"");
     # Normal array
     my @array = @{sanitize(['abcd"', "1234'", 2])};
-    ok($array[0] eq 'abcd');
-    ok($array[1] eq '1234');
+    ok($array[0] eq 'abcd\\"');
+    ok($array[1] eq '1234\\\'');
     ok($array[2] == 2);
     # Array in Array
     @array = @{sanitize([1, ["abcd'", ["xyz'"]]])};
-    ok($array[1][0] eq 'abcd');
-    ok($array[1][1][0] eq 'xyz');
+    ok($array[1][0] eq 'abcd\\\'');
+    ok($array[1][1][0] eq 'xyz\\\'');
     # Hash in an array
     @array = @{sanitize([1, {a => "abcd'"}])};
-    ok($array[1]->{a} eq "abcd");
+    ok($array[1]->{a} eq "abcd\\'");
     # Array in a hash
     my $hash = sanitize({a => ['abcd"', 'xyz"']});
-    ok($hash->{a}->[0] eq "abcd");
-    ok($hash->{a}->[1] eq "xyz");
+    ok($hash->{a}->[0] eq "abcd\\\"");
+    ok($hash->{a}->[1] eq "xyz\\\"");
 }
 
 start();

@@ -6,7 +6,7 @@ use Future;
 
 use Exporter qw(import);
 use Data::Dumper;
-
+use Binary::TelegramBot::StateManager qw (set_table create_table insert update get row_exists);
 # To do use Mojolicious stash for storing all the values.
 
 our @EXPORT_OK = qw(send_ws_request is_authenticated get_property);
@@ -14,11 +14,15 @@ our @EXPORT_OK = qw(send_ws_request is_authenticated get_property);
 my $app_id = "6660";
 my $ws_url = "wss://ws.binaryws.com/websockets/v3?app_id=$app_id";
 my $ua     = Mojo::UserAgent->new;
-$ua = $ua->inactivity_timeout(30);    #Close connection in 30 seconds
+$ua = $ua->inactivity_timeout(60);    #Close connection in 30 seconds
 my $req_id          = 1;
 my $tx_hash         = {};
 my $future_hash     = {};
 my $queued_requests = ();
+
+# Preping database.
+set_table("users");
+create_table();
 
 # $cb -> callback for subscribe request
 sub send_ws_request {
@@ -36,8 +40,8 @@ sub send_ws_request {
                 req     => $req,
                 auth    => 1
                 };
-            authorize($chat_id, {authorize => $tx_hash->{$chat_id}->{token}})
-                if authorize => $tx_hash->{$chat_id}->{token};
+            authorize($chat_id, {authorize => get_property($chat_id, "token")})
+                if row_exists($chat_id);
         } else {
             authorize($chat_id, $req);
         }
@@ -77,7 +81,7 @@ sub on_msg {
 
 sub authorize {
     my ($chat_id, $req) = @_;
-    $req->{passthrough} = {reauthorizing => 1} if $tx_hash->{$chat_id}->{token};
+    $req->{passthrough} = {reauthorizing => 1} if row_exists($chat_id);
     if (!$tx_hash->{$chat_id}->{tx}) {
         push @$queued_requests,
             {
@@ -95,9 +99,14 @@ sub authorize {
 #It pretty much just updates the state
 sub update_state {
     my ($resp, $chat_id) = @_;
-    $tx_hash->{$chat_id}->{authorized} = 1;
-    $tx_hash->{$chat_id}->{token}      = $resp->{echo_req}->{authorize};
-    $tx_hash->{$chat_id}->{authorize}  = $resp->{authorize};
+    if (row_exists($chat_id)) {
+        update($chat_id, "token",    $resp->{echo_req}->{authorize});
+        update($chat_id, "loginid",  $resp->{authorize}->{loginid});
+        update($chat_id, "currency", $resp->{authorize}->{currency});
+        update($chat_id, "balance",  $resp->{authorize}->{balance});
+    } else {
+        insert($chat_id, $resp->{echo_req}->{authorize}, $resp->{authorize});
+    }
 }
 
 # Create a ws connection for every chat session.
@@ -152,14 +161,15 @@ sub send_queued_requests {
 }
 
 sub is_authenticated {
-    my $chat_id = shift;
-    my $token = $tx_hash->{$chat_id}->{token} ? 1 : 0;
-    return $token;
+    my $chat_id       = shift;
+    my $authenticated = row_exists($chat_id);
+    return $authenticated;
 }
 
 sub get_property {
     my ($chat_id, $property) = @_;
-    return $tx_hash->{$chat_id}->{authorize}->{$property};
+    my @result = get($chat_id, $property);
+    return $result[0];
 }
 
 1;
