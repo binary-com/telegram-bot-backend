@@ -40,13 +40,13 @@ sub start {
     # Check if row already exists
     ok(row_exists(1) == 1);
     update(1, "balance", 1000);
-    ok(get(1,"balance") == 1000);
+    @result = get(1, "balance");
+    ok($result[0] == 1000);
     check_sanitizer();
 }
 
 sub check_sanitizer {
     ok(sanitize(1234) == 1234);
-    print sanitize("abcd'");
     ok(sanitize("abcd'") eq "abcd\\'");
     ok(sanitize('abcd"') eq "abcd\\\"");
     # Normal array

@@ -10,9 +10,9 @@ sub start {
 
 sub test1 {
     my $resp = Binary::TelegramBot::Modules::Trade::get_trade_type("DIGITMATCH");
-    ok($resp eq "Trade type: Digit Matches\n") or "Wrong return value for get_trade_type";
+    ok($resp eq "Trade type: Digit Matches\n") or diag "Wrong return value for get_trade_type";
     $resp = Binary::TelegramBot::Modules::Trade::get_trade_type("DIGITMATCH_5");
-    ok($resp eq "Trade type: Digit Matches\nBarrier: 5\n") or "Wrong return value for get_trade_type with barrier";
+    ok($resp eq "Trade type: Digit Matches\nBarrier: 5\n") or diag "Wrong return value for get_trade_type with barrier";
 }
 
 start();
