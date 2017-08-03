@@ -99,6 +99,7 @@ sub authorize {
 #It pretty much just updates the state
 sub update_state {
     my ($resp, $chat_id) = @_;
+    $tx_hash->{$chat_id}->{authorized} = 1;
     if (row_exists($chat_id)) {
         update($chat_id, "token",    $resp->{echo_req}->{authorize});
         update($chat_id, "loginid",  $resp->{authorize}->{loginid});
