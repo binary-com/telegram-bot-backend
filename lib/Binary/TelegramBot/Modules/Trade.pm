@@ -282,7 +282,7 @@ sub get_trade_type {
         "DIGITODD"   => "Digit Odd"
     }->{$args[0]};
     $ret_val = "Trade type: $name\n";
-    $ret_val .= "Barrier: $args[1]\n" if $args[1];
+    $ret_val .= "Barrier: $args[1]\n" if $args[1] ne undef;
     return $ret_val;
 }
 
