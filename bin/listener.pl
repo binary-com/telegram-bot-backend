@@ -9,7 +9,7 @@ use Binary::TelegramBot::TelegramCommandHandler qw(process_message);
 app->config(
     hypnotoad => {
         listen             => ['http://*:3000'],
-        workers            => 10,
+        workers            => 1,
         inactivity_timeout => 3600,
         heartbeat_timeout  => 120,
     });

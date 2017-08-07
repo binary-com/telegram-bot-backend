@@ -70,11 +70,14 @@ my $commands = {
                 price => $args[1]});
         $future->on_ready(
             sub {
-                my $response = $future->get;
-                my $reply = forward_ws_response($chat_id, $response);
-                send_message($reply);
-                my $contract_id = decode_json($response)->{buy}->{contract_id};
-                Binary::TelegramBot::Modules::Trade::subscribe_proposal($chat_id, $contract_id);
+                my $response    = $future->get;
+                my $reply       = forward_ws_response($chat_id, $response);
+                my $on_msg_sent = send_message($reply);
+                $on_msg_sent->on_ready(
+                    sub {
+                        my $contract_id = decode_json($response)->{buy}->{contract_id};
+                        Binary::TelegramBot::Modules::Trade::subscribe_proposal($chat_id, $contract_id);
+                    });
             });
     }
 };
