@@ -243,7 +243,7 @@ sub send_proposal {
         symbol        => $params->{underlying}};
     $request->{barrier} = $params->{barrier} if $params->{barrier} ne '';
     my $future = send_ws_request($chat_id, $request);
-    $future->on_ready(
+    $future->then(
         sub {
             my $response = $future->get;
             my $reply = forward_ws_response($chat_id, $response);
