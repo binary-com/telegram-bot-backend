@@ -5,9 +5,9 @@ use Binary::TelegramBot::SendMessage qw(send_message);
 use Binary::TelegramBot::Helper::Await qw (await_response);
 use Binary::TelegramBot::WSResponseHandler qw(forward_ws_response);
 use Future;
-use Data::Dumper;
 use JSON qw(decode_json);
 use Exporter qw(import);
+use Binary::TelegramBot::KeyboardGenerator qw (keyboard_generator merge_keyboards);
 
 our @EXPORT = qw(process_trade subscribe_proposal get_trade_type);
 
@@ -19,31 +19,18 @@ sub process_trade {
     my $response_map = {
         0 => sub {
             my $response = 'Please select a trade type:';
-            my $keys     = [[{
-                        text          => 'Digit Matches',
-                        callback_data => '/trade DIGITMATCH'
-                    },
-                    {
-                        text          => 'Digit Differs',
-                        callback_data => '/trade DIGITDIFF'
-                    },
-                    {
-                        text          => 'Digit Over',
-                        callback_data => '/trade DIGITOVER'
-                    },
+            my $keys     = keyboard_generator(
+                'Please select a trade type',
+                [
+                    ['Digit Matches', '/trade DIGITMATCH'],
+                    ['Digit Differs', '/trade DIGITDIFF'],
+                    ['Digit Over',    '/trade DIGITOVER'],
+                    ['Digit Under',   '/trade DIGITUNDER'],
+                    ['Digit Even',    '/trade DIGITEVEN'],
+                    ['Digit Odd',     '/trade DIGITODD']
                 ],
-                [{
-                        text          => 'Digit Under',
-                        callback_data => '/trade DIGITUNDER'
-                    },
-                    {
-                        text          => 'Digit Even',
-                        callback_data => '/trade DIGITEVEN'
-                    },
-                    {
-                        text          => 'Digit Odd',
-                        callback_data => '/trade DIGITODD'
-                    }]];
+                3
+            );
             send_message({
                     chat_id      => $chat_id,
                     text         => $response,
@@ -53,28 +40,17 @@ sub process_trade {
             my $trade_type = $args[0];
             return if ask_for_barrier($chat_id, $args[0]);    #Check if contract requires barrier.
             my $response = get_trade_type($trade_type) . "\nPlease select an underlying:";
-            my $keys     = [[{
-                        text          => 'Volatility Index 10',
-                        callback_data => "/trade $trade_type R_10"
-                    },
-                    {
-                        text          => 'Volatility Index 25',
-                        callback_data => "/trade $trade_type R_25"
-                    }
+            my $keys     = keyboard_generator(
+                'Please select an underlying',
+                [
+                    ['Volatility Index 10',  "/trade $trade_type R_10"],
+                    ['Volatility Index 25',  "/trade $trade_type R_25"],
+                    ['Volatility Index 50',  "/trade $trade_type R_50"],
+                    ['Volatility Index 75',  "/trade $trade_type R_75"],
+                    ['Volatility Index 100', "/trade $trade_type R_100"]
                 ],
-                [{
-                        text          => 'Volatility Index 50',
-                        callback_data => "/trade $trade_type R_50"
-                    },
-                    {
-                        text          => 'Volatility Index 75',
-                        callback_data => "/trade $trade_type R_75"
-                    },
-                ],
-                [{
-                        text          => 'Volatility Index 100',
-                        callback_data => "/trade $trade_type R_100"
-                    }]];
+                2
+            );
             send_message({
                     chat_id      => $chat_id,
                     text         => $response,
@@ -85,27 +61,17 @@ sub process_trade {
             my $underlying = $args[1];
             my $currency   = get_property($chat_id, "currency");
             my $response   = get_trade_type($trade_type) . "Underlying: " . get_underlying_name($underlying) . " \n\nPlease select a payout:";
-            my $keys       = [[{
-                        text          => "5 $currency",
-                        callback_data => "/trade $trade_type $underlying 5"
-                    },
-                    {
-                        text          => "10 $currency",
-                        callback_data => "/trade $trade_type $underlying 10"
-                    },
-                    {
-                        text          => "25 $currency",
-                        callback_data => "/trade $trade_type $underlying 25"
-                    }
+            my $keys       = keyboard_generator(
+                'Please select a payout',
+                [
+                    ["5 $currency",   "/trade $trade_type $underlying 5"],
+                    ["10 $currency",  "/trade $trade_type $underlying 10"],
+                    ["25 $currecncy", "/trade $trade_type $underlying 25"],
+                    ["50 $currency",  "/trade $trade_type $underlying 50"],
+                    ["100 $currency", "/trade $trade_type $underlying 100"]
                 ],
-                [{
-                        text          => "50 $currency",
-                        callback_data => "/trade $trade_type $underlying 50"
-                    },
-                    {
-                        text          => "100 $currency",
-                        callback_data => "/trade $trade_type $underlying 100"
-                    }]];
+                3
+            );
             send_message({
                     chat_id      => $chat_id,
                     text         => $response,
@@ -123,31 +89,18 @@ sub process_trade {
                 . get_property($chat_id, "currency")
                 . " $payout"
                 . "\n\nPlease select a duration:";
-            my $keys = [[{
-                        text          => '5 ticks',
-                        callback_data => "/trade $trade_type $underlying $payout 5"
-                    },
-                    {
-                        text          => '6 ticks',
-                        callback_data => "/trade $trade_type $underlying $payout 6"
-                    },
-                    {
-                        text          => '7 ticks',
-                        callback_data => "/trade $trade_type $underlying $payout 7"
-                    }
+            my $keys = keyboard_generator(
+                'Please select a duration',
+                [
+                    ['5 ticks',  "/trade $trade_type $underlying $payout 5"],
+                    ['6 ticks',  "/trade $trade_type $underlying $payout 6"],
+                    ['7 ticks',  "/trade $trade_type $underlying $payout 7"],
+                    ['8 ticks',  "/trade $trade_type $underlying $payout 8"],
+                    ['9 ticks',  "/trade $trade_type $underlying $payout 9"],
+                    ['10 ticks', "/trade $trade_type $underlying $payout 10"]
                 ],
-                [{
-                        text          => '8 ticks',
-                        callback_data => "/trade $trade_type $underlying $payout 8"
-                    },
-                    {
-                        text          => '9 ticks',
-                        callback_data => "/trade $trade_type $underlying $payout 9"
-                    },
-                    {
-                        text          => '10 ticks',
-                        callback_data => "/trade $trade_type $underlying $payout 10"
-                    }]];
+                3
+            );
             send_message({
                     chat_id      => $chat_id,
                     text         => $response,
@@ -179,49 +132,18 @@ sub ask_for_barrier {
     my @requires_barrrier = qw(DIGITMATCH DIGITDIFF DIGITUNDER DIGITOVER);
     if (grep(/^$trade_type$/, @requires_barrrier) && $barrier eq '') {
         my $response = get_trade_type($trade_type) . "\nPlease select a digit:";
-        my $keys     = [[{
-                    text          => '1',
-                    callback_data => "/trade ${trade_type}_1"
-                },
-                {
-                    text          => '2',
-                    callback_data => "/trade ${trade_type}_2"
-                },
-                {
-                    text          => '3',
-                    callback_data => "/trade ${trade_type}_3"
-                },
-                {
-                    text          => '4',
-                    callback_data => "/trade ${trade_type}_4"
-                }
-            ],
-            [{
-                    text          => '5',
-                    callback_data => "/trade ${trade_type}_5"
-                },
-                {
-                    text          => '6',
-                    callback_data => "/trade ${trade_type}_6"
-                },
-                {
-                    text          => '7',
-                    callback_data => "/trade ${trade_type}_7"
-                },
-                {
-                    text          => '8',
-                    callback_data => "/trade ${trade_type}_8"
-                }]];
-        unshift @$keys[0],
-            {
-            text          => '0',
-            callback_data => "/trade ${trade_type}_0"
-            } if ($trade_type ne 'DIGITUNDER');
-        push @$keys[1],
-            {
-            text          => '9',
-            callback_data => "/trade ${trade_type}_9"
-            } if ($trade_type ne 'DIGITOVER');
+        my $arr_keys = [
+            ['1', "/trade ${trade_type}_1"],
+            ['2', "/trade ${trade_type}_2"],
+            ['3', "/trade ${trade_type}_3"],
+            ['4', "/trade ${trade_type}_4"],
+            ['5', "/trade ${trade_type}_5"],
+            ['6', "/trade ${trade_type}_6"],
+            ['7', "/trade ${trade_type}_7"],
+            ['8', "/trade ${trade_type}_8"]];
+        unshift @$arr_keys, ['0', "/trade ${trade_type}_0"] if ($trade_type ne 'DIGITUNDER');
+        push @$arr_keys,    ['9', "/trade ${trade_type}_9"] if ($trade_type ne 'DIGITOVER');
+        my $keys = keyboard_generator('Please select a digit', $arr_keys, 4);
         send_message({
                 chat_id      => $chat_id,
                 text         => $response,
