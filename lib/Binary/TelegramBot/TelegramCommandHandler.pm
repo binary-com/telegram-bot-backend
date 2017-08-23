@@ -68,12 +68,12 @@ my $commands = {
             {
                 buy   => $args[0],
                 price => $args[1]});
-        $future->then(
+        $future->on_ready(
             sub {
                 my $response    = $future->get;
                 my $reply       = forward_ws_response($chat_id, $response);
                 my $on_msg_sent = send_message($reply);
-                $on_msg_sent->then(
+                $on_msg_sent->on_ready(
                     sub {
                         my $contract_id = decode_json($response)->{buy}->{contract_id};
                         Binary::TelegramBot::Modules::Trade::subscribe_proposal($chat_id, $contract_id);
@@ -105,7 +105,7 @@ sub send_un_authenticated_msg {
 
 sub send_response_on_ready {
     my ($chat_id, $future) = @_;
-    $future->then(
+    $future->on_ready(
         sub {
             my $response = $future->get;
             my $reply = forward_ws_response($chat_id, $response);
