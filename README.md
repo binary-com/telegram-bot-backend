@@ -8,6 +8,16 @@ Set environment variable for bot by executing:
 
 > $ export TELEGRAM_BOT="token"
 
+Install `cpanm` and dependencies:
+
+> $ sudo apt install gcc   
+> $ sudo apt install cpanminus   
+> $ sudo cpanm install Mojo::UserAgent   
+> $ sudo cpanm install JSON   
+> $ sudo cpanm install DBI   
+> $ sudo cpanm install Future   
+> $ sudo cpanm install DBD::SQLite   
+
 Then:
 
 > $ hypnotoad bin/listener.pl

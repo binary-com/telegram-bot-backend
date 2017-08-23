@@ -7,7 +7,6 @@ use Data::Dumper;
 
 sub start {
     set_table("testtable");
-    remove_table();
     create_table();
     insert(
         1, "abcd",
@@ -43,6 +42,7 @@ sub start {
     @result = get(1, "balance");
     ok($result[0] == 1000);
     check_sanitizer();
+    remove_table();
 }
 
 sub check_sanitizer {
