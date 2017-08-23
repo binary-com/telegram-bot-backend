@@ -19,14 +19,14 @@ sub keyboard_generator {
     push @keyboard,
         [{
             text          => $title,
-            callback_data => ''
+            callback_data => 'undef'
         }];
 
     while (scalar @$keys) {
         my @row;
         for(1..$keys_per_row) {
             next unless scalar @$keys;
-            my @key = @{shift $keys};
+            my @key = @{shift @$keys};
             push @row, { text => $key[0], callback_data => $key[1]};
         }
         push @keyboard, [@row];
