@@ -7,6 +7,7 @@ use Binary::TelegramBot::WSResponseHandler qw(forward_ws_response);
 use Future;
 use Data::Dumper;
 use JSON qw(decode_json);
+use Exporter qw(import);
 
 our @EXPORT = qw(process_trade subscribe_proposal get_trade_type);
 
