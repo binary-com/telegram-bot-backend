@@ -19,7 +19,7 @@ is_deeply(
     $keyboard1,
     [[{
                 text          => 'Please select a trade type',
-                callback_data => ''
+                callback_data => 'null'
             }
         ],
         [{
@@ -60,7 +60,7 @@ is_deeply(
     $keyboard2,
     [[{
                 text          => 'Some task',
-                callback_data => ''
+                callback_data => 'null'
             }
         ],
         [{
@@ -85,7 +85,7 @@ is_deeply(
     $merged_keyboard,
     [[{
                 text          => 'Please select a trade type',
-                callback_data => ''
+                callback_data => 'null'
             }
         ],
         [{
@@ -116,7 +116,7 @@ is_deeply(
         ],
         [{
                 text          => 'Some task',
-                callback_data => ''
+                callback_data => 'null'
             }
         ],
         [{

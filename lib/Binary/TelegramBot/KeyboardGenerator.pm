@@ -19,7 +19,7 @@ sub keyboard_generator {
     push @keyboard,
         [{
             text          => $title,
-            callback_data => 'undef'
+            callback_data => 'null'
         }];
 
     while (scalar @$keys) {

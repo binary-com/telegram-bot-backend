@@ -34,6 +34,9 @@ my $commands = {
             text    => $response
         });
     },
+    'null' => sub {
+        #do nothing
+    },
     "balance" => sub {
         my $chat_id  = shift;
         my $response = '';
