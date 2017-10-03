@@ -22,7 +22,7 @@ sub process_trade {
             my $keys     = keyboard_generator(
                 'Please select a trade type',
                 [
-                    ['Digit Matches', '/trade DIGITMATCH'],
+                    ['	Digit Matches', '/trade DIGITMATCH'],
                     ['Digit Differs', '/trade DIGITDIFF'],
                     ['Digit Over',    '/trade DIGITOVER'],
                     ['Digit Under',   '/trade DIGITUNDER'],
