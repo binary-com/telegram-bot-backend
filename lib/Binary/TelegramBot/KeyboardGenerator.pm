@@ -9,12 +9,13 @@ our @EXPORT_OK = qw |keyboard_generator merge_keyboards|;
 =head2 keyboard_generator
 
 Accepts title, and keys in the format [['Key text', 'Callback data']] and number of keys in a row.
+Also accepts currently selected key.
 Returns telegram compatible keys.
 
 =cut
 
 sub keyboard_generator {
-    my ($title, $keys, $keys_per_row) = @_;
+    my ($title, $keys, $keys_per_row, $selected) = @_;
     my @keyboard;
     push @keyboard,
         [{
@@ -27,7 +28,8 @@ sub keyboard_generator {
         for(1..$keys_per_row) {
             next unless scalar @$keys;
             my @key = @{shift @$keys};
-            push @row, { text => $key[0], callback_data => $key[1]};
+            push @row, { text => defined($selected) && $key[1] eq $selected ? "\x{2705} $key[0]" : $key[0], 
+                callback_data => $key[1]};
         }
         push @keyboard, [@row];
     }

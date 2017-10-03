@@ -4,7 +4,7 @@ use Test::More "no_plan";
 use Binary::TelegramBot::KeyboardGenerator qw(keyboard_generator merge_keyboards);
 use Data::Dumper;
 
-my $keys = [
+my @keys = [
     ['Digit Matches', '/trade DIGITMATCH'],
     ['Digit Differs', '/trade DIGITDIFF'],
     ['Digit Over',    '/trade DIGITOVER'],
@@ -13,7 +13,7 @@ my $keys = [
     ['Digit Odd',     '/trade DIGITODD']];
 my $title        = 'Please select a trade type';
 my $keys_per_row = 3;
-my $keyboard1    = keyboard_generator($title, $keys, $keys_per_row);
+my $keyboard1    = keyboard_generator($title, @keys, $keys_per_row);
 
 is_deeply(
     $keyboard1,
@@ -51,10 +51,10 @@ is_deeply(
     'check returned keyboard'
 );
 
-$keys         = [['Lorem', 'lorem'], ['Ipsum', 'ipsum'], ['Dolor', 'dolor']];
+@keys         = [['Lorem', 'lorem'], ['Ipsum', 'ipsum'], ['Dolor', 'dolor']];
 $title        = 'Some task';
 $keys_per_row = 2;
-my $keyboard2 = keyboard_generator($title, $keys, $keys_per_row);
+my $keyboard2 = keyboard_generator($title, @keys, $keys_per_row);
 
 is_deeply(
     $keyboard2,
@@ -135,3 +135,9 @@ is_deeply(
     ],
     'merge keyboards'
 );
+
+# Check if selected key is highlighted
+@keys         = [['Lorem', 'lorem'], ['Ipsum', 'ipsum'], ['Dolor', 'dolor']];
+my $keyboard = keyboard_generator("Abcd", @keys, 2, 'lorem');
+is($keyboard->[1]->[0]->{text}, "\x{2705} Lorem", 'check if selected value is highlighted')
+
