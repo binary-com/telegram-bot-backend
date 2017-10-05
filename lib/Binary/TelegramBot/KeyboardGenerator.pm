@@ -28,7 +28,7 @@ sub keyboard_generator {
         for(1..$keys_per_row) {
             next unless scalar @$keys;
             my @key = @{shift @$keys};
-            push @row, { text => defined($selected) && $key[1] eq $selected ? "\x{2705} $key[0]" : $key[0], 
+            push @row, { text => defined($selected) && $key[0] eq $selected ? "\x{2705} $key[0]" : $key[0],
                 callback_data => $key[1]};
         }
         push @keyboard, [@row];

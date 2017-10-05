@@ -2,17 +2,38 @@ use strict;
 use warnings;
 
 use Test::More "no_plan";
-use Binary::TelegramBot::Modules::Trade qw(get_trade_type);
+use Binary::TelegramBot::Modules::Trade qw(get_trade_type process_trade);
+
+my $response;
 
 sub start {
     test1();
+    testProcessTrade();
 }
 
 sub test1 {
     my $resp = Binary::TelegramBot::Modules::Trade::get_trade_type("DIGITMATCH");
-    ok($resp eq "Trade type: Digit Matches\n") or diag "Wrong return value for get_trade_type";
+    ok($$resp[0] eq "Digit Matches", "Trade type shortcode to longcode");
     $resp = Binary::TelegramBot::Modules::Trade::get_trade_type("DIGITMATCH_5");
-    ok($resp eq "Trade type: Digit Matches\nBarrier: 5\n") or diag "Wrong return value for get_trade_type with barrier";
+    my $expected_resp = ["Digit Matches", 5];
+    is_deeply($resp, $expected_resp, "Trade type with barrier, response");
+}
+
+sub testProcessTrade {
+    my $keyboard = process_trade("1234", "");
+    is(scalar @{$keyboard->{reply_markup}->{inline_keyboard}}, 13, "Initial response for trade command");
+    $keyboard = process_trade("1234", "DIGITMATCH   ");
+    is($keyboard->{reply_markup}->{inline_keyboard}->[5]->[0]->{callback_data}, "/trade DIGITMATCH R_50  ", "Check if trade_type is appended to callback data");
+    #use Data::Dumper; print Dumper $keyboard;
+    $keyboard = process_trade("1234", "DIGITMATCH R_10  ");
+    is($keyboard->{reply_markup}->{inline_keyboard}->[8]->[0]->{callback_data}, "/trade DIGITMATCH R_10 5 ", "Check if underlying is appended to the callback_data");
+    $keyboard = process_trade("1234", "DIGITMATCH R_10 5 ");
+    is($keyboard->{reply_markup}->{inline_keyboard}->[11]->[0]->{callback_data}, "/trade DIGITMATCH R_10 5 5", "Check if currency is appended to the callback_data");
+    $keyboard = process_trade("1234", "DIGITMATCH R_10 5 6");
+    is($keyboard->{reply_markup}->{inline_keyboard}->[1]->[0]->{text}, "\x{2705} Digit Matches", "Check if trade_type was highlighted.");
+    is($keyboard->{reply_markup}->{inline_keyboard}->[4]->[0]->{text}, "\x{2705} Volatility Index 10", "Check if underlying was highlighted.");
+    is($keyboard->{reply_markup}->{inline_keyboard}->[8]->[0]->{text}, "\x{2705} 5 ", "Check if currency was highlighted.");
+    is($keyboard->{reply_markup}->{inline_keyboard}->[11]->[1]->{text}, "\x{2705} 6 ticks", "Check if ticks was highlighted.");
 }
 
 start();
