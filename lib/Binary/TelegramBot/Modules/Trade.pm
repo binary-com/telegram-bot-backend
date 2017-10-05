@@ -1,6 +1,6 @@
 package Binary::TelegramBot::Modules::Trade;
 
-use Binary::TelegramBot::WSBridge qw(send_ws_request get_property);
+use Binary::TelegramBot::WSBridge qw(send_ws_request);
 use Binary::TelegramBot::SendMessage qw(send_message);
 use Binary::TelegramBot::Helper::Await qw (await_response);
 use Binary::TelegramBot::WSResponseHandler qw(forward_ws_response);
@@ -12,16 +12,16 @@ use Binary::TelegramBot::KeyboardGenerator qw (keyboard_generator merge_keyboard
 our @EXPORT = qw(process_trade subscribe_proposal get_trade_type);
 
 sub process_trade {
-    my ($chat_id, $arguments) = @_;
+    my ($arguments, $currency) = @_;
     my @args = split(/ /, $arguments, 4);
-    my $length = scalar @args;
 
     my $response_map = {
         0 => sub {
-            my $trade_type = get_trade_type($args[0]);
-            my $underlying = $args[1];
-            my $payout     = $args[2];
-            my $duration   = $args[3];
+            my $args = shift;
+            my $trade_type = get_trade_type($$args[0]);
+            my $underlying = $$args[1];
+            my $payout     = $$args[2];
+            my $duration   = $$args[3];
             return keyboard_generator(
                 'Please select a trade type',
                 [
@@ -36,13 +36,13 @@ sub process_trade {
             );
         },
         1 => sub {
-            my $trade_type = $args[0];
-            my $payout     = $args[2];
-            my $duration   = $args[3];
-
-            # return if ask_for_barrier($chat_id, $args[0]);    #Check if contract requires barrier.
-
-            return keyboard_generator(
+            my $args = shift;
+            my $trade_type = $$args[0];
+            my $payout     = $$args[2];
+            my $duration   = $$args[3];
+            #Check if contract requires barrier.
+            my $barrier_keys = ask_for_barrier($trade_type);
+            my $keys = keyboard_generator(
                 'Please select an underlying',
                 [
                     ['Volatility Index 10',  "/trade $trade_type R_10 $payout $duration"],
@@ -53,28 +53,36 @@ sub process_trade {
                 ],
                 2, get_underlying_name($args[1])
             );
+
+            if($barrier_keys) {
+                return merge_keyboards($barrier_keys, $keys);
+            }
+            return $keys;
         },
         2 => sub {
-            my $trade_type = $args[0];
-            my $underlying = $args[1];
-            my $duration   = $args[3];
-            my $currency   = get_property($chat_id, "currency");
+            my $args       = shift;
+            my $currency   = shift;
+            my $trade_type = $$args[0];
+            my $underlying = $$args[1];
+            my $duration   = $$args[3];
+
             return keyboard_generator(
                 'Please select a payout',
                 [
                     ["5 $currency",   "/trade $trade_type $underlying 5 $duration"],
                     ["10 $currency",  "/trade $trade_type $underlying 10 $duration"],
-                    ["25 $currecncy", "/trade $trade_type $underlying 25 $duration"],
+                    ["25 $currency", "/trade $trade_type $underlying 25 $duration"],
                     ["50 $currency",  "/trade $trade_type $underlying 50 $duration"],
                     ["100 $currency", "/trade $trade_type $underlying 100 $duration"]
                 ],
-                3, "$args[2] $currency"
+                3, "$$args[2] $currency"
             );
         },
         3 => sub {
-            my $trade_type = $args[0];
-            my $underlying = $args[1];
-            my $payout     = $args[2];
+            my $args = shift;
+            my $trade_type = $$args[0];
+            my $underlying = $$args[1];
+            my $payout     = $$args[2];
             return keyboard_generator(
                 'Please select a duration',
                 [
@@ -85,12 +93,8 @@ sub process_trade {
                     ['9 ticks',  "/trade $trade_type $underlying $payout 9"],
                     ['10 ticks', "/trade $trade_type $underlying $payout 10"]
                 ],
-                3, "$args[3] ticks"
+                3, "$$args[3] ticks"
             );
-            # send_message({
-            #         chat_id      => $chat_id,
-            #         text         => $response,
-            #         reply_markup => {inline_keyboard => $keys}});
         },
         4 => sub {
             my ($trade_type, $barrier) = split(/_/, $args[0], 2);
@@ -110,60 +114,67 @@ sub process_trade {
     };
 
     my $keyboard = [];
+    my $arg_length = 0;
 
-    for( my $i = 0; $length <= 4 && $i < ($length || 4); $i++) {
-        # In case of first request run the loop at least four times
-        my $keys = $response_map->{$i}(@args);
+    for( my $i = 0; $i < 4; $i++) {
+        if($args[$i]) {
+          $arg_length++;
+        }
+        my $keys = $response_map->{$i}(\@args, $currency);
         $keyboard = merge_keyboards($keyboard, $keys);
     }
 
+
+    if($arg_length == 4) {
+      # All the required options were selected by user. Sending a proposal request.
+    }
+
     return {
-            chat_id      => $chat_id,
-            text         => $response,
+            text         => '',
             reply_markup => {inline_keyboard => $keyboard}};
 }
 
 sub ask_for_barrier {
-    my ($chat_id, $args) = @_;
+    my $args = shift;
     my ($trade_type, $barrier) = split(/_/, $args, 2);
     my @requires_barrrier = qw(DIGITMATCH DIGITDIFF DIGITUNDER DIGITOVER);
-    if (grep(/^$trade_type$/, @requires_barrrier) && $barrier eq '') {
+    if (grep(/^$trade_type$/, @requires_barrrier)) {
         my $arr_keys = [
-            ['1', "/trade ${trade_type}_1"],
-            ['2', "/trade ${trade_type}_2"],
-            ['3', "/trade ${trade_type}_3"],
-            ['4', "/trade ${trade_type}_4"],
-            ['5', "/trade ${trade_type}_5"],
-            ['6', "/trade ${trade_type}_6"],
-            ['7', "/trade ${trade_type}_7"],
-            ['8', "/trade ${trade_type}_8"]];
-        unshift @$arr_keys, ['0', "/trade ${trade_type}_0"] if ($trade_type ne 'DIGITUNDER');
-        push @$arr_keys,    ['9', "/trade ${trade_type}_9"] if ($trade_type ne 'DIGITOVER');
-        my $keys = keyboard_generator('Please select a digit', $arr_keys, 4);
-        return 1;
+            ['1', "/trade ${trade_type}_1   "],
+            ['2', "/trade ${trade_type}_2   "],
+            ['3', "/trade ${trade_type}_3   "],
+            ['4', "/trade ${trade_type}_4   "],
+            ['5', "/trade ${trade_type}_5   "],
+            ['6', "/trade ${trade_type}_6   "],
+            ['7', "/trade ${trade_type}_7   "],
+            ['8', "/trade ${trade_type}_8   "]];
+        unshift @$arr_keys, ['0', "/trade ${trade_type}_0   "] if ($trade_type ne 'DIGITUNDER');
+        push @$arr_keys,    ['9', "/trade ${trade_type}_9   "] if ($trade_type ne 'DIGITOVER');
+        my $keys = keyboard_generator('Please select a digit', $arr_keys, 4, $barrier);
+        return $keys;
     }
-    return 0;
+    return undef;
 }
 
 sub send_proposal {
-    my ($chat_id, $params) = @_;
+    my ($params, $currency) = @_;
     my $request = {
         proposal      => 1,
         amount        => $params->{payout},
         basis         => 'payout',
         contract_type => $params->{contract_type},
-        currency      => get_property($chat_id, "currency"),
+        currency      => $currency,
         duration      => $params->{duration},
         duration_unit => 't',
         symbol        => $params->{underlying}};
     $request->{barrier} = $params->{barrier} if $params->{barrier} ne '';
-    my $future = send_ws_request($chat_id, $request);
-    $future->on_ready(
-        sub {
-            my $response = $future->get;
-            my $reply = forward_ws_response($chat_id, $response);
-            send_message($reply);
-        });
+    # my $future = send_ws_request($chat_id, $request);
+    # $future->on_ready(
+    #     sub {
+    #         my $response = $future->get;
+    #         my $reply = forward_ws_response($chat_id, $response);
+    #         send_message($reply);
+    #     });
     return;
 }
 

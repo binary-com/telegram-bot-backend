@@ -51,11 +51,14 @@ my $commands = {
     "trade" => sub {
         my ($chat_id, $arguments) = @_;
         my $response = '';
+        my $currency = get_property($chat_id, "currency");
         if (!is_authenticated($chat_id)) {
             send_un_authenticated_msg($chat_id);
             return;
         } else {
-            Binary::TelegramBot::Modules::Trade::process_trade($chat_id, $arguments);
+            my $response = Binary::TelegramBot::Modules::Trade::process_trade($arguments, $currency);
+            $response->{chat_id} = $chat_id;
+            send_message($response);
         }
     },
     "buy" => sub {
