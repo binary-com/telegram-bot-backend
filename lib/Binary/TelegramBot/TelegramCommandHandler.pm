@@ -5,7 +5,7 @@ use warnings;
 
 use Exporter qw(import);
 use Binary::TelegramBot::SendMessage qw(send_message);
-use Binary::TelegramBot::WSBridge qw(send_ws_request is_authenticated);
+use Binary::TelegramBot::WSBridge qw(send_ws_request is_authenticated get_property);
 use Binary::TelegramBot::WSResponseHandler qw(forward_ws_response);
 use Binary::TelegramBot::Modules::Trade qw(process_trade subscribe_proposal);
 use JSON qw(decode_json);
@@ -56,7 +56,7 @@ my $commands = {
             send_un_authenticated_msg($chat_id);
             return;
         } else {
-            my $response = Binary::TelegramBot::Modules::Trade::process_trade($arguments, $currency);
+            my $response = process_trade($arguments, $currency);
             $response->{chat_id} = $chat_id;
             send_message($response);
         }
@@ -82,7 +82,7 @@ my $commands = {
                 $on_msg_sent->on_ready(
                     sub {
                         my $contract_id = decode_json($response)->{buy}->{contract_id};
-                        Binary::TelegramBot::Modules::Trade::subscribe_proposal($chat_id, $contract_id);
+                        subscribe_proposal($chat_id, $contract_id);
                     });
             });
     }

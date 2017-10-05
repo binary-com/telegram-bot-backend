@@ -18,7 +18,7 @@ my $keyboard1    = keyboard_generator($title, @keys, $keys_per_row);
 is_deeply(
     $keyboard1,
     [[{
-                text          => 'Please select a trade type',
+                text          => '~~~ Please select a trade type ~~~',
                 callback_data => 'null'
             }
         ],
@@ -59,7 +59,7 @@ my $keyboard2 = keyboard_generator($title, @keys, $keys_per_row);
 is_deeply(
     $keyboard2,
     [[{
-                text          => 'Some task',
+                text          => '~~~ Some task ~~~',
                 callback_data => 'null'
             }
         ],
@@ -84,7 +84,7 @@ my $merged_keyboard = merge_keyboards($keyboard1, $keyboard2);
 is_deeply(
     $merged_keyboard,
     [[{
-                text          => 'Please select a trade type',
+                text          => '~~~ Please select a trade type ~~~',
                 callback_data => 'null'
             }
         ],
@@ -115,7 +115,7 @@ is_deeply(
             }
         ],
         [{
-                text          => 'Some task',
+                text          => '~~~ Some task ~~~',
                 callback_data => 'null'
             }
         ],
@@ -138,6 +138,6 @@ is_deeply(
 
 # Check if selected key is highlighted
 @keys         = [['Lorem', 'lorem'], ['Ipsum', 'ipsum'], ['Dolor', 'dolor']];
-my $keyboard = keyboard_generator("Abcd", @keys, 2, 'lorem');
+my $keyboard = keyboard_generator("Abcd", @keys, 2, 'Lorem');
 is($keyboard->[1]->[0]->{text}, "\x{2705} Lorem", 'check if selected value is highlighted')
 

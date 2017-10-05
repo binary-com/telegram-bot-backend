@@ -12,9 +12,9 @@ sub start {
 }
 
 sub test1 {
-    my $resp = Binary::TelegramBot::Modules::Trade::get_trade_type("DIGITMATCH");
+    my $resp = get_trade_type("DIGITMATCH");
     ok($$resp[0] eq "Digit Matches", "Trade type shortcode to longcode");
-    $resp = Binary::TelegramBot::Modules::Trade::get_trade_type("DIGITMATCH_5");
+    $resp = get_trade_type("DIGITMATCH_5");
     my $expected_resp = ["Digit Matches", 5];
     is_deeply($resp, $expected_resp, "Trade type with barrier, response");
 }
@@ -34,8 +34,8 @@ sub testProcessTrade {
     is($keyboard->{reply_markup}->{inline_keyboard}->[4]->[0]->{text}, "\x{2705} Volatility Index 10", "Check if underlying was highlighted.");
     is($keyboard->{reply_markup}->{inline_keyboard}->[8]->[0]->{text}, "\x{2705} 5 USD", "Check if currency was highlighted.");
     is($keyboard->{reply_markup}->{inline_keyboard}->[11]->[1]->{text}, "\x{2705} 6 ticks", "Check if ticks was highlighted.");
-    $keyboard = process_trade("DIGITMATCH_5 R_10 5 6", "USD");
-    is($keyboard->{reply_markup}->{inline_keyboard}->[5]->[1]->{text}, "\x{2705} 5", "Check if barrier was highlighted");
+    $keyboard = process_trade("DIGITMATCH_6 R_10 5 6", "USD");
+    is($keyboard->{reply_markup}->{inline_keyboard}->[5]->[1]->{text}, "\x{2705} 6", "Check if barrier was highlighted");
     #use Data::Dumper; print Dumper $keyboard;
 }
 

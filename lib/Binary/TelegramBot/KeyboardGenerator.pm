@@ -19,7 +19,7 @@ sub keyboard_generator {
     my @keyboard;
     push @keyboard,
         [{
-            text          => $title,
+            text          => "~~~ $title ~~~",
             callback_data => 'null'
         }];
 

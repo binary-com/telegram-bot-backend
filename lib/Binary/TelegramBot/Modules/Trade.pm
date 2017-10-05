@@ -17,7 +17,7 @@ sub process_trade {
 
     my $response_map = {
         0 => sub {
-            my $args = shift;
+            my $args       = shift;
             my $trade_type = get_trade_type($$args[0]);
             my $underlying = $$args[1];
             my $payout     = $$args[2];
@@ -25,12 +25,12 @@ sub process_trade {
             return keyboard_generator(
                 'Please select a trade type',
                 [
-                    ['Digit Matches', "/trade DIGITMATCH $underlying $payout $duration"],
-                    ['Digit Differs', "/trade DIGITDIFF $underlying $payout $duration"],
-                    ['Digit Over',    "/trade DIGITOVER $underlying $payout $duration"],
-                    ['Digit Under',   "/trade DIGITUNDER $underlying $payout $duration"],
-                    ['Digit Even',    "/trade DIGITEVEN $underlying $payout $duration"],
-                    ['Digit Odd',     "/trade DIGITODD $underlying $payout $duration"]
+                    ['Digit Matches', "/trade DIGITMATCH_$$trade_type[1] $underlying $payout $duration"],
+                    ['Digit Differs', "/trade DIGITDIFF_$$trade_type[1] $underlying $payout $duration"],
+                    ['Digit Over',    "/trade DIGITOVER_$$trade_type[1] $underlying $payout $duration"],
+                    ['Digit Under',   "/trade DIGITUNDER_$$trade_type[1] $underlying $payout $duration"],
+                    ['Digit Even',    "/trade DIGITEVEN_$$trade_type[1] $underlying $payout $duration"],
+                    ['Digit Odd',     "/trade DIGITODD_$$trade_type[1] $underlying $payout $duration"]
                 ],
                 3, $$trade_type[0]
             );
@@ -41,7 +41,7 @@ sub process_trade {
             my $payout     = $$args[2];
             my $duration   = $$args[3];
             #Check if contract requires barrier.
-            my $barrier_keys = ask_for_barrier($trade_type);
+            my $barrier_keys = ask_for_barrier($args);
             my $keys = keyboard_generator(
                 'Please select an underlying',
                 [
@@ -130,27 +130,30 @@ sub process_trade {
     }
 
     return {
-            text         => '',
+            text         => 'Please select options',
             reply_markup => {inline_keyboard => $keyboard}};
 }
 
 sub ask_for_barrier {
     my $args = shift;
-    my ($trade_type, $barrier) = split(/_/, $args, 2);
+    my $underlying = $$args[1];
+    my $payout     = $$args[2];
+    my $duration   = $$args[3];
+    my ($trade_type, $barrier) = split(/_/, $$args[0], 2);;
     my @requires_barrrier = qw(DIGITMATCH DIGITDIFF DIGITUNDER DIGITOVER);
     if (grep(/^$trade_type$/, @requires_barrrier)) {
         my $arr_keys = [
-            ['1', "/trade ${trade_type}_1   "],
-            ['2', "/trade ${trade_type}_2   "],
-            ['3', "/trade ${trade_type}_3   "],
-            ['4', "/trade ${trade_type}_4   "],
-            ['5', "/trade ${trade_type}_5   "],
-            ['6', "/trade ${trade_type}_6   "],
-            ['7', "/trade ${trade_type}_7   "],
-            ['8', "/trade ${trade_type}_8   "]];
+            ['1', "/trade ${trade_type}_1 $underlying $payout $duration"],
+            ['2', "/trade ${trade_type}_2 $underlying $payout $duration"],
+            ['3', "/trade ${trade_type}_3 $underlying $payout $duration"],
+            ['4', "/trade ${trade_type}_4 $underlying $payout $duration"],
+            ['5', "/trade ${trade_type}_5 $underlying $payout $duration"],
+            ['6', "/trade ${trade_type}_6 $underlying $payout $duration"],
+            ['7', "/trade ${trade_type}_7 $underlying $payout $duration"],
+            ['8', "/trade ${trade_type}_8 $underlying $payout $duration"]];
         unshift @$arr_keys, ['0', "/trade ${trade_type}_0   "] if ($trade_type ne 'DIGITUNDER');
         push @$arr_keys,    ['9', "/trade ${trade_type}_9   "] if ($trade_type ne 'DIGITOVER');
-        my $keys = keyboard_generator('Please select a digit', $arr_keys, 4, $barrier);
+        my $keys = keyboard_generator('Please select a digit', $arr_keys, 5, $barrier);
         return $keys;
     }
     return undef;
@@ -185,7 +188,7 @@ sub subscribe_proposal {
         contract_id            => $contract_id,
         subscribe              => 1
     };
-    my $future = Future->new;
+
     send_ws_request(
         $chat_id, $request,
         sub {
