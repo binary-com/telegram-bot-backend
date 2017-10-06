@@ -63,9 +63,9 @@ my $process_ws_resp = {
         my $contract_id = $resp->{contract_id};
         my $buy_price   = $resp->{buy_price};
         my $balance     = $resp->{balance_after};
-        my $msg         = qq(Succesfully bought contract at $currency $buy_price.\n
-            Your new balance: $currency $balance\n
-            Your contract-id: $contract_id);
+        my $msg         = "Succesfully bought contract at $currency $buy_price.\n" .
+            "Your new balance: $currency $balance\n" .
+            "Your contract-id: $contract_id";
 
         return {
             chat_id => $chat_id,
@@ -78,7 +78,7 @@ my $process_ws_resp = {
         return if (!$resp->{entry_tick_time} || $resp->{current_spot_time} < $resp->{entry_tick_time});
 
         my $current_spot = $resp->{current_spot};
-        $current_spot = s/(\d)$/*$1*/;
+        $current_spot =~ s/(\d)$/*$1*/;
         my $msg = $resp->{current_spot_time} < $resp->{date_expiry} ? "Current spot: ${current_spot}" : "";
 
         if (!$msg) {
