@@ -2,7 +2,6 @@ package Binary::TelegramBot::Modules::Trade;
 
 use Binary::TelegramBot::WSBridge qw(send_ws_request);
 use Binary::TelegramBot::SendMessage qw(send_message);
-use Binary::TelegramBot::Helper::Await qw (await_response);
 use Binary::TelegramBot::WSResponseHandler qw(forward_ws_response);
 use Future;
 use JSON qw(decode_json);
@@ -95,21 +94,6 @@ sub process_trade {
                 ],
                 3, "$$args[3] ticks"
             );
-        },
-        4 => sub {
-            my ($trade_type, $barrier) = split(/_/, $args[0], 2);
-            my $underlying = $args[1];
-            my $payout     = $args[2];
-            my $duration   = $args[3];
-            # send_proposal(
-            #     $chat_id,
-            #     {
-            #         underlying    => $underlying,
-            #         payout        => $payout,
-            #         contract_type => $trade_type,
-            #         duration      => $duration,
-            #         barrier       => $barrier
-            #     });
         }
     };
 
@@ -127,6 +111,7 @@ sub process_trade {
 
     if($arg_length == 4) {
       # All the required options were selected by user. Sending a proposal request.
+      return proposal(\@args, $currency);
     }
 
     return {
@@ -159,26 +144,21 @@ sub ask_for_barrier {
     return undef;
 }
 
-sub send_proposal {
-    my ($params, $currency) = @_;
+sub proposal {
+    my ($args, $currency) = @_;
+    my ($trade_type, $barrier) = split(/_/, $$args[0], 2);
     my $request = {
         proposal      => 1,
-        amount        => $params->{payout},
+        amount        => $$args[2],
         basis         => 'payout',
-        contract_type => $params->{contract_type},
+        contract_type => $trade_type,
         currency      => $currency,
-        duration      => $params->{duration},
+        duration      => $$args[3],
         duration_unit => 't',
-        symbol        => $params->{underlying}};
-    $request->{barrier} = $params->{barrier} if $params->{barrier} ne '';
-    # my $future = send_ws_request($chat_id, $request);
-    # $future->on_ready(
-    #     sub {
-    #         my $response = $future->get;
-    #         my $reply = forward_ws_response($chat_id, $response);
-    #         send_message($reply);
-    #     });
-    return;
+        symbol        => $$args[1]};
+    $request->{barrier} = $barrier if $barrier ne '';
+
+    return $request;
 }
 
 sub subscribe_proposal {

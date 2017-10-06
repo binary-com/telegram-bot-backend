@@ -32,7 +32,8 @@ sub listener {
             $processed_messages->{$update_id} = 1;
             my $msg = $msg_obj->{callback_query}->{data} || $msg_obj->{message}->{text};
             my $chat_id = $msg_obj->{callback_query}->{message}->{chat}->{id} || $msg_obj->{message}->{chat}->{id};
-            process_message($chat_id, $msg);
+            my $message_id = $msg_obj->{callback_query}->{message}->{message_id};
+            process_message($chat_id, $msg, $message_id);
         }
         $self->render(text => "Ok");
     };
