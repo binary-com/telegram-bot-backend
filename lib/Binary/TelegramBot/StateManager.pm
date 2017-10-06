@@ -40,7 +40,7 @@ sub create_table {
 sub insert {
     my ($chat_id, $token, $authorize) = @{sanitize(\@_)};
     my $stmt = qq(
-        INSERT INTO $table 
+        INSERT INTO $table
         (messageid, token, loginid, currency, balance)
         VALUES($chat_id, "$token", "$authorize->{loginid}", "$authorize->{currency}", "$authorize->{balance}");
     );

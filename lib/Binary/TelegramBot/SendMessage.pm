@@ -37,7 +37,7 @@ my $get_url    = sub {
 sub send_message {
     my ($reply) = @_;
     my $future = Future->new;
-    my $url    = get_url($reply);
+    my $url    = $get_url->($reply);
     $reply->{parse_mode} = "Markdown";
     $ua->post(
         "$url" => json => $reply => sub {

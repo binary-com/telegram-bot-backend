@@ -50,7 +50,6 @@ my $commands = {
     },
     "trade" => sub {
         my ($chat_id, $arguments, $msgid) = @_;
-        my $response = '';
         my $currency = get_property($chat_id, "currency");
         if (!is_authenticated($chat_id)) {
             send_un_authenticated_msg($chat_id);
@@ -58,10 +57,10 @@ my $commands = {
         } else {
             my $ret = process_trade($arguments, $currency);
             if($ret->{proposal}) {
-              send_response_on_ready($response);
+              send_response_on_ready($chat_id, $ret);
             } else {
                 $ret->{chat_id} = $chat_id;
-                $ret->{message_id} = $message_id if $message_id;
+                $ret->{message_id} = $msgid if $msgid;
                 send_message($ret);
             }
         }
