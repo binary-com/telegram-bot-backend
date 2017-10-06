@@ -60,7 +60,7 @@ my $commands = {
             $$ret[0]->{message_id} = $msgid if $msgid;
             send_message($$ret[0]);
             if(scalar @$ret == 2 && $$ret[1]->{proposal}) {
-                send_ws_response_on_ready($chat_id, $$ret->[1]);
+                send_ws_response_on_ready($chat_id, $$ret[1]);
             }
         }
     },

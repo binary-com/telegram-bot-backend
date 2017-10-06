@@ -42,8 +42,8 @@ my $process_ws_resp = {
         my $id = $resp->{id};
         my $msg =
               "$resp->{longcode}"
-            . "\nAsk Price: $resp->{ask_price}"
-            . "\nPayout: $resp->{payout}"
+            . "\nTotal cost: $resp->{ask_price}"
+            . "\nPotential payout: $resp->{payout}"
             . "\n\nTo buy the contract please select the following option";
         my $keyboard = {
             inline_keyboard => [[{
@@ -60,9 +60,12 @@ my $process_ws_resp = {
     "buy" => sub {
         my ($chat_id, $resp) = @_;
         my $currency    = get_property($chat_id, "currency");
+        my $contract_id = $resp->{contract_id};
         my $buy_price   = $resp->{buy_price};
         my $balance     = $resp->{balance_after};
-        my $msg         = "Succesfully bought contract at $currency $buy_price.\nYour new balance: $currency $balance";
+        my $msg         = qq(Succesfully bought contract at $currency $buy_price.\n
+            Your new balance: $currency $balance\n
+            Your contract-id: $contract_id);
 
         return {
             chat_id => $chat_id,
@@ -71,11 +74,15 @@ my $process_ws_resp = {
     },
     "proposal_open_contract" => sub {
         my ($chat_id, $resp) = @_;
+        # Return if the current spot is before entry tick.
         return if (!$resp->{entry_tick_time} || $resp->{current_spot_time} < $resp->{entry_tick_time});
+
         my $current_spot = $resp->{current_spot};
-        my $msg = $resp->{current_spot_time} < $resp->{date_expiry} ? "Current spot: *${current_spot}*" : "";
+        $current_spot = s/(\d)$/*$1*/;
+        my $msg = $resp->{current_spot_time} < $resp->{date_expiry} ? "Current spot: ${current_spot}" : "";
+
         if (!$msg) {
-            $msg = $resp->{current_spot_time} == $resp->{date_expiry} ? "Exit spot: *${current_spot}*" : "";
+            $msg = $resp->{current_spot_time} == $resp->{date_expiry} ? "Exit spot: ${current_spot}" : "";
         }
 
         if ($resp->{is_sold}) {
