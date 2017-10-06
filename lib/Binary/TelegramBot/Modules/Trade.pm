@@ -107,16 +107,16 @@ sub process_trade {
         my $keys = $response_map->{$i}(\@args, $currency);
         $keyboard = merge_keyboards($keyboard, $keys);
     }
-
+    my $ret = [{
+        text         => 'Please select options',
+        reply_markup => {inline_keyboard => $keyboard}}];
 
     if($arg_length == 4) {
       # All the required options were selected by user. Sending a proposal request.
-      return proposal(\@args, $currency);
+      push @{$ret}, proposal(\@args, $currency);
     }
 
-    return {
-            text         => 'Please select options',
-            reply_markup => {inline_keyboard => $keyboard}};
+    return $ret;
 }
 
 sub ask_for_barrier {

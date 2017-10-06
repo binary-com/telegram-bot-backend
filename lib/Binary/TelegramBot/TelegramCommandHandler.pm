@@ -25,7 +25,7 @@ my $commands = {
             chat_id => $chat_id,
             text    => $response
         });
-        send_response_on_ready($chat_id, {authorize => $token});
+        send_ws_response_on_ready($chat_id, {authorize => $token});
     },
     'undef' => sub {
         my $chat_id  = shift;
@@ -42,7 +42,7 @@ my $commands = {
         my $chat_id  = shift;
         my $response = '';
         if (is_authenticated($chat_id)) {
-            send_response_on_ready($chat_id, {balance => 1});
+            send_ws_response_on_ready($chat_id, {balance => 1});
         } else {
             send_un_authenticated_msg($chat_id);
             return;
@@ -56,12 +56,11 @@ my $commands = {
             return;
         } else {
             my $ret = process_trade($arguments, $currency);
-            if($ret->{proposal}) {
-              send_response_on_ready($chat_id, $ret);
-            } else {
-                $ret->{chat_id} = $chat_id;
-                $ret->{message_id} = $msgid if $msgid;
-                send_message($ret);
+            $$ret[0]->{chat_id} = $chat_id;
+            $$ret[0]->{message_id} = $msgid if $msgid;
+            send_message($$ret[0]);
+            if(scalar @$ret == 2 && $$ret[1]->{proposal}) {
+                send_ws_response_on_ready($chat_id, $$ret->[1]);
             }
         }
     },
@@ -113,9 +112,14 @@ sub send_un_authenticated_msg {
     });
 }
 
-sub send_response_on_ready {
+sub send_ws_response_on_ready {
     my ($chat_id, $request) = @_;
     my $future = send_ws_request($chat_id, $request);
+    on_ready($chat_id, $future);
+}
+
+sub on_ready {
+    my ($chat_id, $future) = @_;
     $future->on_ready(
         sub {
             my $response = $future->get;
