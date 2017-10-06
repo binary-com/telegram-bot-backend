@@ -13,6 +13,7 @@ use JSON qw(decode_json);
 our @EXPORT = qw(process_message);
 
 my $url = "https://4p00rv.github.io/BinaryTelegramBotLanding/index.html";
+my $processed_buy_req = {};
 
 my $commands = {
     'start' => sub {
@@ -68,6 +69,12 @@ my $commands = {
         my ($chat_id, $arguments) = @_;
         my @args = split(/ /, $arguments, 2);
         my $response = 'Processing buy request.';
+
+        # Return if buy request already processed
+        return if $processed_buy_req->{$args[0]};
+
+        $processed_buy_req->{$args[0]} = 1;
+
         send_message({
             chat_id => $chat_id,
             text    => $response
