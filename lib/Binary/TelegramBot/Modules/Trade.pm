@@ -204,7 +204,9 @@ sub get_payout_keyboard {
     my @keys;
     my $payout_list = {
       'USD' => [5, 10, 25, 50, 100],
-      'BTC' => [0.001, 0.002, 0.005, 0.01, 0.02]
+      'BTC' => [0.001, 0.002, 0.005, 0.01, 0.02],
+      'LTC' => [0.1, 0.2, 0.5, 1, 2],
+      'BCH' => [0.02, 0.04, 0.1, 0.2, 0.4]
     };
     push @keys, ["$_ $currency",   "/trade $trade_type $underlying $_ $duration"]
         for @{$payout_list->{$currency}};
