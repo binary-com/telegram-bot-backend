@@ -2,13 +2,22 @@ use strict;
 use warnings;
 
 use Test::More "no_plan";
-use Binary::TelegramBot::Modules::Trade qw(get_trade_type process_trade);
+use Binary::TelegramBot::Modules::Trade qw(get_trade_type process_trade get_payout_keyboard);
 
 my $response;
 
 sub start {
-    test1();
-    testProcessTrade();
+    testPayoutKeyboard();
+    # test1();
+    # testProcessTrade();
+}
+
+sub testPayoutKeyboard {
+    my $args = ['DIGITEVEN', 'R_10', '', '5'];
+    my @keys = @{get_payout_keyboard($args, 'USD')};
+    ok($keys[0]->[0] eq '5 USD', 'Check for USD');
+    @keys = @{get_payout_keyboard($args, 'BTC')};
+    ok($keys[0]->[0] eq '0.001 BTC', 'Check for BTC');
 }
 
 sub test1 {

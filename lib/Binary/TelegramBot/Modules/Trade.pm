@@ -8,7 +8,7 @@ use JSON qw(decode_json);
 use Exporter qw(import);
 use Binary::TelegramBot::KeyboardGenerator qw (keyboard_generator merge_keyboards);
 
-our @EXPORT = qw(process_trade subscribe_proposal get_trade_type);
+our @EXPORT = qw(process_trade subscribe_proposal get_trade_type get_payout_keyboard);
 
 sub process_trade {
     my ($arguments, $currency) = @_;
@@ -61,19 +61,11 @@ sub process_trade {
         2 => sub {
             my $args       = shift;
             my $currency   = shift;
-            my $trade_type = $$args[0];
-            my $underlying = $$args[1];
-            my $duration   = $$args[3];
+            my $keyboard   = get_payout_keyboard($args, $currency);
 
             return keyboard_generator(
                 'Please select a payout',
-                [
-                    ["5 $currency",   "/trade $trade_type $underlying 5 $duration"],
-                    ["10 $currency",  "/trade $trade_type $underlying 10 $duration"],
-                    ["25 $currency", "/trade $trade_type $underlying 25 $duration"],
-                    ["50 $currency",  "/trade $trade_type $underlying 50 $duration"],
-                    ["100 $currency", "/trade $trade_type $underlying 100 $duration"]
-                ],
+                @$keyboard,
                 3, "$$args[2] $currency"
             );
         },
@@ -202,6 +194,22 @@ sub get_underlying_name {
         R_75  => "Volatility Index 75",
         R_100 => "Volatility Index 100"
     }->{$symbol};
+}
+
+sub get_payout_keyboard {
+    my ($args, $currency) = @_;
+    my $trade_type = $$args[0];
+    my $underlying = $$args[1];
+    my $duration   = $$args[3];
+    my @keys;
+    my $payout_list = {
+      'USD' => [5, 10, 25, 50, 100],
+      'BTC' => [0.001, 0.002, 0.005, 0.01, 0.02]
+    };
+    push @keys, ["$_ $currency",   "/trade $trade_type $underlying $_ $duration"]
+        for @{$payout_list->{$currency}};
+
+    return \@keys;
 }
 
 1;
