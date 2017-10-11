@@ -6,7 +6,7 @@ use Future;
 
 use Exporter qw(import);
 use Data::Dumper;
-use Binary::TelegramBot::StateManager qw (set_table create_table insert update get row_exists);
+use Binary::TelegramBot::StateManager qw (set_table create_table insert update get row_exists delete_row);
 # To do use Mojolicious stash for storing all the values.
 
 our @EXPORT_OK = qw(send_ws_request is_authenticated get_property);
@@ -76,7 +76,12 @@ sub on_msg {
         update_state($resp_obj, $chat_id);
     }
 
-    send_queued_requests($chat_id);
+    # Delete token.
+    if ($resp_obj->{msg_type} eq "logout" && !$resp_obj->{error}) {
+        delete_state($resp_obj, $chat_id);
+    }
+
+   send_queued_requests($chat_id);
 }
 
 sub authorize {
@@ -108,6 +113,12 @@ sub update_state {
     } else {
         insert($chat_id, $resp->{echo_req}->{authorize}, $resp->{authorize});
     }
+}
+
+sub delete_state {
+    my ($resp, $chat_id) = @_;
+    delete $tx_hash->{$chat_id};
+    delete_row($chat_id) if row_exists($chat_id);
 }
 
 # Create a ws connection for every chat session.

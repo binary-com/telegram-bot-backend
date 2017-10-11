@@ -7,7 +7,7 @@ use Exporter qw(import);
 use Data::Dumper;
 use DBI;
 
-our @EXPORT = qw(set_table create_table insert update get disconnect row_exists remove_table sanitize);
+our @EXPORT = qw(set_table create_table insert update get disconnect row_exists remove_table sanitize delete_row);
 
 my $driver = "SQLite";
 my $db     = "Users.db";
@@ -52,6 +52,12 @@ sub update {
     my $stmt = qq(
         UPDATE $table SET $field = "$value" where messageid=$chat_id;
     );
+    $dbh->do($stmt) or die $DBI::errstr;
+}
+
+sub delete_row{
+    my ($chat_id) = @{sanitize(\@_)};
+    my $stmt = qq(DELETE FROM $table where messageid=$chat_id);
     $dbh->do($stmt) or die $DBI::errstr;
 }
 
