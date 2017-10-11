@@ -16,29 +16,6 @@ my $url = "https://4p00rv.github.io/BinaryTelegramBotLanding/index.html";
 my $processed_buy_req = {};
 
 my $commands = {
-    'start' => sub {
-        my ($chat_id, $token) = @_;
-        my $response =
-              "Hi there! Welcome to [Binary.com\'s](https://www.binary.com) bot."
-            . "\nWe\'re glad to see you here."
-            . "\n\nPlease wait while we authorize you.";
-        send_message({
-            chat_id => $chat_id,
-            text    => $response
-        });
-        send_ws_response_on_ready($chat_id, {authorize => $token});
-    },
-    'undef' => sub {
-        my $chat_id  = shift;
-        my $response = 'A reply to that query is still being designed. Please hold on tight while this BOT evolves.';
-        send_message({
-            chat_id => $chat_id,
-            text    => $response
-        });
-    },
-    'null' => sub {
-        #do nothing
-    },
     "balance" => sub {
         my $chat_id  = shift;
         my $response = '';
@@ -48,6 +25,55 @@ my $commands = {
             send_un_authenticated_msg($chat_id);
             return;
         }
+    },
+    "buy" => sub {
+        my ($chat_id, $arguments) = @_;
+        my @args = split(/ /, $arguments, 2);
+        my $response = 'Processing buy request.';
+
+        # Return if buy request already processed
+        return if $processed_buy_req->{$args[0]};
+
+        $processed_buy_req->{$args[0]} = 1;
+
+        send_message({
+                chat_id => $chat_id,
+                text    => $response
+            });
+        my $future = send_ws_request(
+            $chat_id,
+            {
+                buy   => $args[0],
+                price => $args[1]});
+        $future->on_ready(
+            sub {
+                my $response    = $future->get;
+                my $reply       = forward_ws_response($chat_id, $response);
+                my $on_msg_sent = send_message($reply);
+                $on_msg_sent->on_ready(
+                    sub {
+                        my $contract_id = decode_json($response)->{buy}->{contract_id};
+                        subscribe_proposal($chat_id, $contract_id);
+                    });
+            });
+    },
+    'logout' => sub {
+        send_ws_response_on_ready($chat_id, {logout => 1});
+    },
+    'null' => sub {
+        #do nothing
+    },
+    'start' => sub {
+        my ($chat_id, $token) = @_;
+        my $response =
+        "Hi there! Welcome to [Binary.com\'s](https://www.binary.com) bot."
+        . "\nWe\'re glad to see you here."
+        . "\n\nPlease wait while we authorize you.";
+        send_message({
+                chat_id => $chat_id,
+                text    => $response
+            });
+        send_ws_response_on_ready($chat_id, {authorize => $token});
     },
     "trade" => sub {
         my ($chat_id, $arguments, $msgid) = @_;
@@ -65,35 +91,12 @@ my $commands = {
             }
         }
     },
-    "buy" => sub {
-        my ($chat_id, $arguments) = @_;
-        my @args = split(/ /, $arguments, 2);
-        my $response = 'Processing buy request.';
-
-        # Return if buy request already processed
-        return if $processed_buy_req->{$args[0]};
-
-        $processed_buy_req->{$args[0]} = 1;
-
+    'undef' => sub {
+        my $chat_id  = shift;
+        my $response = 'A reply to that query is still being designed. Please hold on tight while this BOT evolves.';
         send_message({
-            chat_id => $chat_id,
-            text    => $response
-        });
-        my $future = send_ws_request(
-            $chat_id,
-            {
-                buy   => $args[0],
-                price => $args[1]});
-        $future->on_ready(
-            sub {
-                my $response    = $future->get;
-                my $reply       = forward_ws_response($chat_id, $response);
-                my $on_msg_sent = send_message($reply);
-                $on_msg_sent->on_ready(
-                    sub {
-                        my $contract_id = decode_json($response)->{buy}->{contract_id};
-                        subscribe_proposal($chat_id, $contract_id);
-                    });
+                chat_id => $chat_id,
+                text    => $response
             });
     }
 };

@@ -38,6 +38,24 @@ my $process_ws_resp = {
             text    => $msg
         };
     },
+    "buy" => sub {
+        my ($chat_id, $resp) = @_;
+        my $currency    = get_property($chat_id, "currency");
+        my $contract_id = $resp->{contract_id};
+        my $buy_price   = $resp->{buy_price};
+        my $balance     = $resp->{balance_after};
+        my $msg         = "Succesfully bought contract at $currency $buy_price.\n" .
+            "Your new balance: $currency $balance\n" .
+            "Your contract-id: $contract_id";
+
+        return {
+            chat_id => $chat_id,
+            text    => $msg
+        };
+    },
+    "logout" => sub {
+        return 'You have been logged out.';
+    },
     "proposal" => sub {
         my ($chat_id, $resp) = @_;
         my $currency = get_property($chat_id, "currency");
@@ -57,21 +75,6 @@ my $process_ws_resp = {
             chat_id      => $chat_id,
             text         => $msg,
             reply_markup => $keyboard
-        };
-    },
-    "buy" => sub {
-        my ($chat_id, $resp) = @_;
-        my $currency    = get_property($chat_id, "currency");
-        my $contract_id = $resp->{contract_id};
-        my $buy_price   = $resp->{buy_price};
-        my $balance     = $resp->{balance_after};
-        my $msg         = "Succesfully bought contract at $currency $buy_price.\n" .
-            "Your new balance: $currency $balance\n" .
-            "Your contract-id: $contract_id";
-
-        return {
-            chat_id => $chat_id,
-            text    => $msg
         };
     },
     "proposal_open_contract" => sub {
