@@ -10,6 +10,8 @@ use Data::Dumper;
 
 our @EXPORT = qw(forward_ws_response);
 
+my $ticks_count = {};
+
 my $process_ws_resp = {
     "authorize" => sub {
         my ($chat_id, $resp) = @_;
@@ -76,21 +78,20 @@ my $process_ws_resp = {
         my ($chat_id, $resp) = @_;
         # Return if the current spot is before entry tick.
         return if (!$resp->{entry_tick_time} || $resp->{current_spot_time} < $resp->{entry_tick_time});
-
+        my $contract_id = $resp->{contract_id};
+        my $count = ++$ticks_count->{$contract_id};
         my $current_spot = $resp->{current_spot};
         $current_spot =~ s/(\d)$/*$1*/;
-        my $msg = $resp->{current_spot_time} < $resp->{date_expiry} ? "Current spot: ${current_spot}" : "";
-
-        if (!$msg) {
-            $msg = $resp->{current_spot_time} == $resp->{date_expiry} ? "Exit spot: ${current_spot}" : "";
-        }
+        my $msg = $resp->{current_spot_time} <= $resp->{date_expiry} ? "Tick #$count: ${current_spot}" : "";
 
         if ($resp->{is_sold}) {
             my $currency   = get_property($chat_id, "currency");
             my $buy_price  = $resp->{buy_price};
             my $sell_price = $resp->{sell_price};
-            $msg .= "\n\nYou won a payout of $currency $sell_price." if $sell_price > 0;
+            my $profit     = $sell_price - $buy_price;
+            $msg .= "\n\nYou won $currency $profit." if $sell_price > 0;
             $msg .= "\n\nYou lost $currency $buy_price." if $sell_price == 0;
+            delete $ticks_count->{$contract_id};
         }
 
         return {
