@@ -65,7 +65,7 @@ sub process_trade {
 
             return keyboard_generator(
                 'Please select a payout',
-                @$keyboard,
+                $keyboard,
                 3, "$$args[2] $currency"
             );
         },
