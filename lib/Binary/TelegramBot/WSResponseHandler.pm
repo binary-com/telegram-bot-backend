@@ -5,8 +5,8 @@ use warnings;
 
 use JSON qw(decode_json);
 use Binary::TelegramBot::WSBridge qw(send_ws_request get_property);
+use POSIX qw(strftime);
 use Exporter qw(import);
-use Data::Dumper;
 
 our @EXPORT = qw(forward_ws_response);
 
@@ -89,6 +89,9 @@ my $process_ws_resp = {
         my $current_spot = $resp->{current_spot};
         $current_spot =~ s/(\d)$/*$1*/;
         my $msg = $resp->{current_spot_time} <= $resp->{date_expiry} ? "Tick #$count: ${current_spot}" : "";
+
+        my $time = strftime("%Y-%m-%d %H:%M:%S", localtime($resp->{current_spot_time}));;
+        $msg .= "    $time";
 
         if ($resp->{is_sold}) {
             my $currency   = get_property($chat_id, "currency");
