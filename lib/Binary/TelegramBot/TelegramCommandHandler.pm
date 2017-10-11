@@ -58,6 +58,7 @@ my $commands = {
             });
     },
     'logout' => sub {
+        my $chat_id = shift;
         send_ws_response_on_ready($chat_id, {logout => 1});
     },
     'null' => sub {

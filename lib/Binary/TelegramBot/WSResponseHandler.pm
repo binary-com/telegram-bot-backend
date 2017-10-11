@@ -54,7 +54,10 @@ my $process_ws_resp = {
         };
     },
     "logout" => sub {
-        return 'You have been logged out.';
+        return {
+            chat_id => shift,
+            text    => 'You have been logged out.'
+        };
     },
     "proposal" => sub {
         my ($chat_id, $resp) = @_;
