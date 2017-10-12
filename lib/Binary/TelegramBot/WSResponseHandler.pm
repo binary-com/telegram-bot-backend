@@ -17,7 +17,7 @@ my $process_ws_resp = {
         my ($chat_id, $resp) = @_;
         my $msg      = "We have successfully authenticated you." . "\nYour login-id is: $resp->{loginid}" . "\nYour balance is: $resp->{balance}";
         my $keyboard = {
-            "keyboard" => [["Trade"], ['Balance']],
+            "keyboard" => [["Trade", 'Logout'], ['Balance']],
             "one_time_keyboard" => \0
         };
 
