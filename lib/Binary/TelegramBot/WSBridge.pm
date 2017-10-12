@@ -33,7 +33,7 @@ sub send_ws_request {
     $future_hash->{$chat_id}->{$req_id} = $cb if $cb;
 
     if (!$tx_hash->{$chat_id}->{tx}) {
-        if (!$req->{authorize}) {
+        if (!$req->{authorize} || !$req->{logout}) {
             push @$queued_requests,
                 {
                 chat_id => $chat_id,

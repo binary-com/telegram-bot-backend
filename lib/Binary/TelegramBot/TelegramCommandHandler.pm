@@ -59,7 +59,7 @@ my $commands = {
     },
     'logout' => sub {
         my $chat_id = shift;
-        send_ws_response_on_ready($chat_id, {logout => 1});
+        send_ws_response_on_ready($chat_id, {logout => 1}) if is_authenticated($chat_id);
     },
     'null' => sub {
         #do nothing
