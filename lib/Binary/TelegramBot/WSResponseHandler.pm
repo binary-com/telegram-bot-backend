@@ -91,7 +91,7 @@ my $process_ws_resp = {
         my $msg = $resp->{current_spot_time} <= $resp->{date_expiry} ? "Tick #$count: ${current_spot}" : "";
 
         my $time = strftime("%Y-%m-%d %H:%M:%S", localtime($resp->{current_spot_time}));;
-        $msg .= "    $time";
+        $msg .= "    $time" if $msg;
 
         if ($resp->{is_sold}) {
             my $currency   = get_property($chat_id, "currency");
