@@ -6,6 +6,8 @@ use FindBin;    # locate this script
 use lib "$FindBin::Bin/../lib";
 use Binary::TelegramBot::TelegramCommandHandler qw(process_message);
 
+my $stash = {};
+
 app->config(
     hypnotoad => {
         listen             => ['http://*:3000'],
@@ -33,7 +35,7 @@ sub listener {
             my $msg = $msg_obj->{callback_query}->{data} || $msg_obj->{message}->{text};
             my $chat_id = $msg_obj->{callback_query}->{message}->{chat}->{id} || $msg_obj->{message}->{chat}->{id};
             my $message_id = $msg_obj->{callback_query}->{message}->{message_id};
-            process_message($chat_id, $msg, $message_id);
+            process_message($stash, $chat_id, $msg, $message_id);
         }
         $self->render(text => "Ok");
     };

@@ -2,91 +2,22 @@ package Binary::TelegramBot::Modules::Trade;
 
 use Binary::TelegramBot::WSBridge qw(send_ws_request);
 use Binary::TelegramBot::SendMessage qw(send_message);
-use Binary::TelegramBot::WSResponseHandler qw(forward_ws_response);
 use Future;
 use JSON qw(decode_json);
 use Exporter qw(import);
 use Binary::TelegramBot::KeyboardGenerator qw (keyboard_generator merge_keyboards);
 
-our @EXPORT = qw(process_trade subscribe_proposal get_trade_type get_payout_keyboard);
+our @EXPORT = qw(process_trade get_trade_type get_payout_keyboard);
 
 sub process_trade {
     my ($arguments, $currency) = @_;
     my @args = split(/ /, $arguments, 4);
 
     my $response_map = {
-        0 => sub {
-            my $args       = shift;
-            my $trade_type = get_trade_type($$args[0]);
-            my $underlying = $$args[1];
-            my $payout     = $$args[2];
-            my $duration   = $$args[3];
-            return keyboard_generator(
-                'Please select a trade type',
-                [
-                    ['Digit Matches', "/trade DIGITMATCH_$$trade_type[1] $underlying $payout $duration"],
-                    ['Digit Differs', "/trade DIGITDIFF_$$trade_type[1] $underlying $payout $duration"],
-                    ['Digit Over',    "/trade DIGITOVER_$$trade_type[1] $underlying $payout $duration"],
-                    ['Digit Under',   "/trade DIGITUNDER_$$trade_type[1] $underlying $payout $duration"],
-                    ['Digit Even',    "/trade DIGITEVEN_$$trade_type[1] $underlying $payout $duration"],
-                    ['Digit Odd',     "/trade DIGITODD_$$trade_type[1] $underlying $payout $duration"]
-                ],
-                3, $$trade_type[0]
-            );
-        },
-        1 => sub {
-            my $args = shift;
-            my $trade_type = $$args[0];
-            my $payout     = $$args[2];
-            my $duration   = $$args[3];
-            #Check if contract requires barrier.
-            my $barrier_keys = ask_for_barrier($args);
-            my $keys = keyboard_generator(
-                'Please select an underlying',
-                [
-                    ['Volatility Index 10',  "/trade $trade_type R_10 $payout $duration"],
-                    ['Volatility Index 25',  "/trade $trade_type R_25 $payout $duration"],
-                    ['Volatility Index 50',  "/trade $trade_type R_50 $payout $duration"],
-                    ['Volatility Index 75',  "/trade $trade_type R_75 $payout $duration"],
-                    ['Volatility Index 100', "/trade $trade_type R_100 $payout $duration"]
-                ],
-                2, get_underlying_name($args[1])
-            );
-
-            if($barrier_keys) {
-                return merge_keyboards($barrier_keys, $keys);
-            }
-            return $keys;
-        },
-        2 => sub {
-            my $args       = shift;
-            my $currency   = shift;
-            my $keyboard   = get_payout_keyboard($args, $currency);
-
-            return keyboard_generator(
-                'Please select a payout',
-                $keyboard,
-                3, "$$args[2] $currency"
-            );
-        },
-        3 => sub {
-            my $args = shift;
-            my $trade_type = $$args[0];
-            my $underlying = $$args[1];
-            my $payout     = $$args[2];
-            return keyboard_generator(
-                'Please select a duration',
-                [
-                    ['5 ticks',  "/trade $trade_type $underlying $payout 5"],
-                    ['6 ticks',  "/trade $trade_type $underlying $payout 6"],
-                    ['7 ticks',  "/trade $trade_type $underlying $payout 7"],
-                    ['8 ticks',  "/trade $trade_type $underlying $payout 8"],
-                    ['9 ticks',  "/trade $trade_type $underlying $payout 9"],
-                    ['10 ticks', "/trade $trade_type $underlying $payout 10"]
-                ],
-                3, "$$args[3] ticks"
-            );
-        }
+        0 => \&trade_type,
+        1 => \&underlying,
+        2 => \&payout,
+        3 => \&duration
     };
 
     my $keyboard = [];
@@ -113,6 +44,52 @@ sub process_trade {
     return $ret;
 }
 
+sub trade_type {
+    my $args       = shift;
+    my $trade_type = get_trade_type($$args[0]);
+    my $underlying = $$args[1];
+    my $payout     = $$args[2];
+    my $duration   = $$args[3];
+    return keyboard_generator(
+        'Please select a trade type',
+        [
+            ['Digit Matches', "/trade DIGITMATCH_$$trade_type[1] $underlying $payout $duration"],
+            ['Digit Differs', "/trade DIGITDIFF_$$trade_type[1] $underlying $payout $duration"],
+            ['Digit Over',    "/trade DIGITOVER_$$trade_type[1] $underlying $payout $duration"],
+            ['Digit Under',   "/trade DIGITUNDER_$$trade_type[1] $underlying $payout $duration"],
+            ['Digit Even',    "/trade DIGITEVEN_$$trade_type[1] $underlying $payout $duration"],
+            ['Digit Odd',     "/trade DIGITODD_$$trade_type[1] $underlying $payout $duration"]
+        ],
+        3, $$trade_type[0]
+    );
+}
+
+sub underlying {
+    my $args = shift;
+    my $trade_type = $$args[0];
+    my $payout     = $$args[2];
+    my $duration   = $$args[3];
+    #Check if contract requires barrier.
+    my $barrier_keys = ask_for_barrier($args);
+    my $keys = keyboard_generator(
+        'Please select an underlying',
+        [
+            ['Volatility Index 10',  "/trade $trade_type R_10 $payout $duration"],
+            ['Volatility Index 25',  "/trade $trade_type R_25 $payout $duration"],
+            ['Volatility Index 50',  "/trade $trade_type R_50 $payout $duration"],
+            ['Volatility Index 75',  "/trade $trade_type R_75 $payout $duration"],
+            ['Volatility Index 100', "/trade $trade_type R_100 $payout $duration"]
+        ],
+        2, get_underlying_name($args[1])
+    );
+
+    if($barrier_keys) {
+        return merge_keyboards($barrier_keys, $keys);
+    }
+    return $keys;
+}
+
+
 sub ask_for_barrier {
     my $args = shift;
     my $underlying = $$args[1];
@@ -138,6 +115,37 @@ sub ask_for_barrier {
     return undef;
 }
 
+sub payout {
+    my $args       = shift;
+    my $currency   = shift;
+    my $keyboard   = get_payout_keyboard($args, $currency);
+
+    return keyboard_generator(
+        'Please select a payout',
+        $keyboard,
+        3, "$$args[2] $currency"
+    );
+}
+
+sub duration {
+    my $args = shift;
+    my $trade_type = $$args[0];
+    my $underlying = $$args[1];
+    my $payout     = $$args[2];
+    return keyboard_generator(
+        'Please select a duration',
+        [
+            ['5 ticks',  "/trade $trade_type $underlying $payout 5"],
+            ['6 ticks',  "/trade $trade_type $underlying $payout 6"],
+            ['7 ticks',  "/trade $trade_type $underlying $payout 7"],
+            ['8 ticks',  "/trade $trade_type $underlying $payout 8"],
+            ['9 ticks',  "/trade $trade_type $underlying $payout 9"],
+            ['10 ticks', "/trade $trade_type $underlying $payout 10"]
+        ],
+        3, "$$args[3] ticks"
+    );
+}
+
 sub proposal {
     my ($args, $currency) = @_;
     my ($trade_type, $barrier) = split(/_/, $$args[0], 2);
@@ -153,24 +161,6 @@ sub proposal {
     $request->{barrier} = $barrier if $barrier ne '';
 
     return $request;
-}
-
-sub subscribe_proposal {
-    my ($chat_id, $contract_id) = @_;
-    my $request = {
-        proposal_open_contract => 1,
-        contract_id            => $contract_id,
-        subscribe              => 1
-    };
-
-    send_ws_request(
-        $chat_id, $request,
-        sub {
-            my ($chat_id, $response) = @_;
-            my $resp_obj = decode_json($response);
-            my $reply = forward_ws_response($chat_id, $response);
-            send_message($reply);
-        });
 }
 
 sub get_trade_type {

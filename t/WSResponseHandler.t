@@ -24,7 +24,7 @@ sub authorize {
     my $req      = {authorize => $creds->{token}};
     my $future   = send_ws_request($creds->{chat_id}, $req);
     my $response = await_response($future);
-    my $reply    = forward_ws_response($creds->{chat_id}, $response);
+    my $reply    = forward_ws_response({}, $creds->{chat_id}, $response);
 
     # Check reply for authorize
     ok(index($reply->{text}, "We have successfully authenticated you.") != -1)
@@ -36,7 +36,7 @@ sub balance {
     my $req      = {balance => 1};
     my $future   = send_ws_request($creds->{chat_id}, $req);
     my $response = await_response($future);
-    my $reply    = forward_ws_response($creds->{chat_id}, $response);
+    my $reply    = forward_ws_response({}, $creds->{chat_id}, $response);
 
     # Check reply for balance
     ok(index($reply->{text}, "Balance:") != -1) or "Unexpected reply for 'balance' response";
@@ -56,7 +56,7 @@ sub proposal {
     };
     my $future   = send_ws_request($creds->{chat_id}, $req);
     my $response = await_response($future);
-    my $reply    = forward_ws_response($creds->{chat_id}, $response);
+    my $reply    = forward_ws_response({}, $creds->{chat_id}, $response);
     my $proposal = decode_json($response)->{proposal};
 
     # Check if proposal reply contains longcode
@@ -80,7 +80,7 @@ sub buy {
     };
     my $future         = send_ws_request($creds->{chat_id}, $req);
     my $response       = await_response($future);
-    my $reply          = forward_ws_response($creds->{chat_id}, $response);
+    my $reply          = forward_ws_response({}, $creds->{chat_id}, $response);
     my $buy            = decode_json($response)->{buy};
     my $currency       = get_property($creds->{chat_id}, "currency");
     my $buy_price      = $buy->{buy_price};
@@ -107,23 +107,23 @@ sub proposal_open_contract {
         msg_type => "proposal_open_contract"
     };
     # No repsonse if entry_tick > current_spot_time
-    my $reply = forward_ws_response($creds->{chat_id}, encode_json($response));
+    my $reply = forward_ws_response({}, $creds->{chat_id}, encode_json($response));
     ok(!$reply) or diag "proposal_open_contract: Expected no response but got response";
     # Normal response
     $response->{proposal_open_contract}->{current_spot_time} = 2;
-    $reply = forward_ws_response($creds->{chat_id}, encode_json($response));
+    $reply = forward_ws_response({}, $creds->{chat_id}, encode_json($response));
     ok($reply->{text} eq "Current spot: *0.5*") or diag "proposal_open_contract: Wrong current spot";
     # Response for exit spot.
     $response->{proposal_open_contract}->{current_spot_time} = 3;
-    $reply = forward_ws_response($creds->{chat_id}, encode_json($response));
+    $reply = forward_ws_response({}, $creds->{chat_id}, encode_json($response));
     ok(index($reply->{text}, "Exit spot: *0.5*") != -1) or diag "proposal_open_contract: Wrong Exit spot";
     # Response for sold_contracts which won.
     $response->{proposal_open_contract}->{is_sold}    = 1;
     $response->{proposal_open_contract}->{sell_price} = 10;
-    $reply = forward_ws_response($creds->{chat_id}, encode_json($response));
+    $reply = forward_ws_response({}, $creds->{chat_id}, encode_json($response));
     ok(index($reply->{text}, "You won a payout of USD 10") != -1) or diag "proposal_open_contract: Wrong message for sold contracts";
     $response->{proposal_open_contract}->{sell_price} = 0;
-    $reply = forward_ws_response($creds->{chat_id}, encode_json($response));
+    $reply = forward_ws_response({}, $creds->{chat_id}, encode_json($response));
     ok(index($reply->{text}, "You lost USD 5.15") != -1) or diag "proposal_open_contract: Wrong message for sold contracts";
 }
 
