@@ -102,8 +102,10 @@ sub process_trade {
     my $ret = [{
         text         => 'Please select options',
         reply_markup => {inline_keyboard => $keyboard}}];
+    my ($trade_type, $barrier) = split(/_/, $args[0], 2);
+    my $requires_barrrier = ask_for_barrier(\@args);
 
-    if($arg_length == 4) {
+    if($arg_length == 4 && (!$requires_barrrier || $barrier)) {
       # All the required options were selected by user. Sending a proposal request.
       push @{$ret}, proposal(\@args, $currency);
     }
@@ -116,7 +118,7 @@ sub ask_for_barrier {
     my $underlying = $$args[1];
     my $payout     = $$args[2];
     my $duration   = $$args[3];
-    my ($trade_type, $barrier) = split(/_/, $$args[0], 2);;
+    my ($trade_type, $barrier) = split(/_/, $$args[0], 2);
     my @requires_barrrier = qw(DIGITMATCH DIGITDIFF DIGITUNDER DIGITOVER);
     if (grep(/^$trade_type$/, @requires_barrrier)) {
         my $arr_keys = [

@@ -8,8 +8,8 @@ my $response;
 
 sub start {
     testPayoutKeyboard();
-    # test1();
-    # testProcessTrade();
+    test1();
+    testProcessTrade();
 }
 
 sub testPayoutKeyboard {
@@ -29,25 +29,27 @@ sub test1 {
 }
 
 sub testProcessTrade {
-    my $keyboard = process_trade("");
-    is(scalar @{$keyboard->{reply_markup}->{inline_keyboard}}, 13, "Initial response for trade command");
+    my $keyboard = process_trade("", "USD");
+    #use Data::Dumper; print Dumper $keyboard;
+    is(scalar @{$keyboard->[0]->{reply_markup}->{inline_keyboard}}, 13, "Initial response for trade command");
     $keyboard = process_trade("DIGITEVEN   ", "USD");
-    is($keyboard->{reply_markup}->{inline_keyboard}->[5]->[0]->{callback_data}, "/trade DIGITEVEN R_50  ", "Check if trade_type is appended to callback data");
+    is($keyboard->[0]->{reply_markup}->{inline_keyboard}->[5]->[0]->{callback_data}, "/trade DIGITEVEN R_50  ", "Check if trade_type is appended to callback data");
     $keyboard = process_trade("DIGITEVEN R_10  ", "USD");
-    is($keyboard->{reply_markup}->{inline_keyboard}->[8]->[0]->{callback_data}, "/trade DIGITEVEN R_10 5 ", "Check if underlying is appended to the callback_data");
+    is($keyboard->[0]->{reply_markup}->{inline_keyboard}->[8]->[0]->{callback_data}, "/trade DIGITEVEN R_10 5 ", "Check if underlying is appended to the callback_data");
     $keyboard = process_trade("DIGITEVEN R_10 5 ", "USD");
-    is($keyboard->{reply_markup}->{inline_keyboard}->[11]->[0]->{callback_data}, "/trade DIGITEVEN R_10 5 5", "Check if currency is appended to the callback_data");
+    is($keyboard->[0]->{reply_markup}->{inline_keyboard}->[11]->[0]->{callback_data}, "/trade DIGITEVEN R_10 5 5", "Check if currency is appended to the callback_data");
     $keyboard = process_trade("DIGITEVEN R_10 5 ", "USD");
-    is($keyboard->{reply_markup}->{inline_keyboard}->[2]->[1]->{text}, "\x{2705} Digit Even", "Check if trade_type was highlighted.");
-    is($keyboard->{reply_markup}->{inline_keyboard}->[4]->[0]->{text}, "\x{2705} Volatility Index 10", "Check if underlying was highlighted.");
-    is($keyboard->{reply_markup}->{inline_keyboard}->[8]->[0]->{text}, "\x{2705} 5 USD", "Check if currency was highlighted.");
+    is($keyboard->[0]->{reply_markup}->{inline_keyboard}->[2]->[1]->{text}, "\x{2705} Digit Even", "Check if trade_type was highlighted.");
+    is($keyboard->[0]->{reply_markup}->{inline_keyboard}->[4]->[0]->{text}, "\x{2705} Volatility Index 10", "Check if underlying was highlighted.");
+    is($keyboard->[0]->{reply_markup}->{inline_keyboard}->[8]->[0]->{text}, "\x{2705} 5 USD", "Check if currency was highlighted.");
     $keyboard = process_trade("DIGITEVEN R_10  6", "USD");
-    is($keyboard->{reply_markup}->{inline_keyboard}->[11]->[1]->{text}, "\x{2705} 6 ticks", "Check if ticks was highlighted.");
+    is($keyboard->[0]->{reply_markup}->{inline_keyboard}->[11]->[1]->{text}, "\x{2705} 6 ticks", "Check if ticks was highlighted.");
     $keyboard = process_trade("DIGITMATCH_6 R_10 5 ", "USD");
-    is($keyboard->{reply_markup}->{inline_keyboard}->[5]->[1]->{text}, "\x{2705} 6", "Check if barrier was highlighted");
+    is($keyboard->[0]->{reply_markup}->{inline_keyboard}->[5]->[1]->{text}, "\x{2705} 6", "Check if barrier was highlighted");
     my $proposal = process_trade("DIGITMATCH_6 R_10 5 6", "USD");
-    ok($proposal->{proposal}, "Proposal request is returned if all the options are selected");
-    use Data::Dumper; print Dumper $proposal;
+    ok($proposal->[1]->{proposal}, "Proposal request is returned if all the options are selected");
+    $proposal = process_trade("DIGITMATCH R_10 5 6", "USD");
+    is($proposal->[1]->{proposal}, undef, "Proposal is not returned if barrier is not selected");
 }
 
 start();
