@@ -66,15 +66,16 @@ my $commands = {
     },
     'start' => sub {
         my ($chat_id, $token) = @_;
-        my $response =
+        my $response = $token ? 
         "Hi there! Welcome to [Binary.com\'s](https://www.binary.com) bot."
         . "\nWe\'re glad to see you here."
-        . "\n\nPlease wait while we authorize you.";
+        . "\n\nPlease wait while we authorize you." : 
+        "Please provide token in the request. eg: `/start <token>`";
         send_message({
                 chat_id => $chat_id,
                 text    => $response
             });
-        send_ws_response_on_ready($chat_id, {authorize => $token});
+        send_ws_response_on_ready($chat_id, {authorize => $token}) if $token;
     },
     "trade" => sub {
         my ($chat_id, $arguments, $msgid) = @_;
