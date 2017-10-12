@@ -19,7 +19,7 @@ sub process_message {
     my $commands = {
         "balance" => \&balance,
         "buy" => \&buy,
-        'logout' => ,
+        'logout' => \&logout,
         'null' => \&do_nothing,
         'start' => \&start_cmd,
         "trade" => \&trade,
@@ -81,7 +81,7 @@ sub buy {
 }
 
 sub logout {
-    my ($stash, $chat_id) = shift;
+    my ($stash, $chat_id) = @_;
     send_ws_response_on_ready($stash, $chat_id, {logout => 1}) if is_authenticated($chat_id);
 }
 
