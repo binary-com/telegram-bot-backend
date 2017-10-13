@@ -4,12 +4,11 @@ use strict;
 use warnings;
 
 use JSON qw(decode_json);
-use Binary::TelegramBot::WSBridge qw(send_ws_request get_property);
+use Binary::TelegramBot::WSBridge qw(get_property);
 use POSIX qw(strftime);
 use Exporter qw(import);
 
 our @EXPORT = qw(forward_ws_response);
-
 
 sub forward_ws_response {
     my ($stash, $chat_id, $resp) = @_;

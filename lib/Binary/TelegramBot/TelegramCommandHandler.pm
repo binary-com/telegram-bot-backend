@@ -43,7 +43,6 @@ sub balance {
         send_ws_response_on_ready($stash, $chat_id, {balance => 1});
     } else {
         send_un_authenticated_msg($chat_id);
-        return;
     }
 }
 
@@ -82,7 +81,11 @@ sub buy {
 
 sub logout {
     my ($stash, $chat_id) = @_;
-    send_ws_response_on_ready($stash, $chat_id, {logout => 1}) if is_authenticated($chat_id);
+    if is_authenticated($chat_id){
+        send_ws_response_on_ready($stash, $chat_id, {logout => 1});
+    } else {
+        send_un_authenticated_msg($chat_id);
+    }
 }
 
 sub do_nothing {

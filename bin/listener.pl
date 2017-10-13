@@ -6,7 +6,9 @@ use FindBin;    # locate this script
 use lib "$FindBin::Bin/../lib";
 use Binary::TelegramBot::TelegramCommandHandler qw(process_message);
 
-my $stash = {};
+my $stash = {
+    req_id => 1
+};
 
 app->config(
     hypnotoad => {

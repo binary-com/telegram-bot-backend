@@ -8,6 +8,8 @@ use Binary::TelegramBot::Helper::Await qw (await_response);
 use Binary::TelegramBot::WSBridge qw(send_ws_request is_authenticated get_property);
 use Data::Dumper;
 
+my $stash = {req_id => 1};
+
 sub start {
     my $creds = {
         chat_id => '123',
@@ -20,13 +22,13 @@ sub start {
 sub authorize {
     my $creds    = shift;
     my $req      = {authorize => 'invalid_token'};
-    my $future   = send_ws_request($creds->{chat_id}, $req);
+    my $future   = send_ws_request($stash, $creds->{chat_id}, $req);
     my $response = decode_json(await_response($future));
     # Invalid token
     ok($response->{error}->{code} eq "InvalidToken") or diag "Unexpected response:\n" . encode_json($response) . "\n";
 
     $req = {authorize => $creds->{token}};
-    $future = send_ws_request($creds->{chat_id}, $req);
+    $future = send_ws_request($stash, $creds->{chat_id}, $req);
     $response = decode_json(await_response($future));
     # Valid token
     ok($response->{authorize}) or diag "Unexpected error: '$response->{error}->{message}'";
@@ -39,7 +41,7 @@ sub authorize {
 sub get_balance {
     my $creds    = shift;
     my $req      = {balance => 1};
-    my $future   = send_ws_request($creds->{chat_id}, $req);
+    my $future   = send_ws_request($stash, $creds->{chat_id}, $req);
     my $response = decode_json(await_response($future));
     # Send ws request for getting balance.
     ok($response->{balance}) or diag "Cannot fetch balance";
@@ -49,7 +51,7 @@ sub test_callback {
     my $creds = shift;
     my $req = {ping => 1};
     my $future = Future->new;
-    send_ws_request(
+    send_ws_request($stash, 
         $creds->{chat_id},
         $req,
         sub {

@@ -25,10 +25,7 @@ my $get_url    = sub {
         edit => "editMessageText"
     };
 
-    if($message_id) {
-        return $url . $methods->{edit};
-    }
-
+    return $url . $methods->{edit} if $message_id;
     return $url . $methods->{send};
 };
 

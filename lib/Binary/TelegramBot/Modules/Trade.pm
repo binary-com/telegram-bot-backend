@@ -1,7 +1,5 @@
 package Binary::TelegramBot::Modules::Trade;
 
-use Binary::TelegramBot::WSBridge qw(send_ws_request);
-use Binary::TelegramBot::SendMessage qw(send_message);
 use Future;
 use JSON qw(decode_json);
 use Exporter qw(import);
