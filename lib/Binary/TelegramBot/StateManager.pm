@@ -99,18 +99,17 @@ sub sanitize {
     my $input = shift;
     # return unless $input;
     if (ref($input) eq "ARRAY") {
-        my @array = @$input;
-        foreach my $param (@array) {
-            $param = sanitize($param);
+        my @arr = @$input;
+        foreach (@arr) {
+            $_ = sanitize($_);
         }
-        @$input = @array;
+        $input = \@arr;
     } elsif (ref($input) eq "HASH") {
-        foreach my $key (keys %$input) {
-            $input->{$key} = sanitize($input->{$key});
+        foreach (keys %$input) {
+            $input->{$_} = sanitize($input->{$_});
         }
     } else {
-        $input =~ s/'/\\'/g;
-        $input =~ s/"/\\"/g;
+        $input =~ s/(['"])/\\$1/g;
     }
     return $input;
 }

@@ -23,6 +23,8 @@ sub forward_ws_response {
     };
 
     return if !$resp;
+
+    $resp = escape_markdown($resp);
     $resp = decode_json($resp);
     if ($resp->{error}) {
         return $process_ws_resp->{error}->($stash, $chat_id, $resp->{error}->{message});
@@ -143,6 +145,12 @@ sub proposal_open_contract {
         chat_id => $chat_id,
         text    => $msg
     };
+}
+
+sub escape_markdown {
+    my $resp = shift;
+    $resp =~ s/([\*\_])/\\$1/g;
+    return $resp;
 }
 
 1;
