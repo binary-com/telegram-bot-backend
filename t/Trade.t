@@ -30,7 +30,6 @@ sub test1 {
 
 sub testProcessTrade {
     my $keyboard = process_trade("", "USD");
-    #use Data::Dumper; print Dumper $keyboard;
     is(scalar @{$keyboard->[0]->{reply_markup}->{inline_keyboard}}, 13, "Initial response for trade command");
     $keyboard = process_trade("DIGITEVEN   ", "USD");
     is($keyboard->[0]->{reply_markup}->{inline_keyboard}->[5]->[0]->{callback_data}, "/trade DIGITEVEN R_50  ", "Check if trade_type is appended to callback data");

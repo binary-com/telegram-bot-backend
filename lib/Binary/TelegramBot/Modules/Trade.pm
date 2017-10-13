@@ -80,7 +80,7 @@ sub underlying {
             ['Volatility Index 75',  "/trade $trade_type R_75 $payout $duration"],
             ['Volatility Index 100', "/trade $trade_type R_100 $payout $duration"]
         ],
-        2, get_underlying_name($args[1])
+        2, get_underlying_name($$args[1])
     );
 
     if($barrier_keys) {

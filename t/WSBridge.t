@@ -11,7 +11,7 @@ use Data::Dumper;
 sub start {
     my $creds = {
         chat_id => '123',
-        token   => $ENV{"BINARY_TOKEN"}};
+        token   => $ENV{BINARY_TOKEN}};
     authorize($creds);
     get_balance($creds);
     test_callback($creds);

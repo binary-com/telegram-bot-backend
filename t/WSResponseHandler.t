@@ -63,10 +63,10 @@ sub proposal {
     ok(index($reply->{text}, $proposal->{longcode}) == 0)
         or diag "Longcode not found in response";
     # Check if proposal reply contains buy price
-    ok(index($reply->{text}, "Ask Price: $proposal->{ask_price}") != -1)
+    ok(index($reply->{text}, "Total cost: $proposal->{ask_price}") != -1)
         or diag "Ask price not found";
     # Check if proposal reply contains payout
-    ok(index($reply->{text}, "Payout: $proposal->{payout}") != -1)
+    ok(index($reply->{text}, "Potential payout: $proposal->{payout}") != -1)
         or diag "Payout not found";
 
     return $proposal->{id};
@@ -85,10 +85,10 @@ sub buy {
     my $currency       = get_property($creds->{chat_id}, "currency");
     my $buy_price      = $buy->{buy_price};
     my $balance        = $buy->{balance_after};
-    my $expected_reply = "Succesfully bought contract at $currency $buy_price.\nYour new balance: $currency $balance";
+    my $expected_reply = "Succesfully bought contract at $currency $buy_price.\nYour new balance: $currency $balance"
+        . "\nYour contract-id: $buy->{contract_id}";
     # Check if buy request was successful
-    ok($reply->{text} eq $expected_reply)
-        or diag "Buy request failed";
+    is($reply->{text}, $expected_reply, "Check if contract bough successfully");
 
     return $buy->{contract_id};
 }
@@ -99,32 +99,34 @@ sub proposal_open_contract {
         proposal_open_contract => {
             entry_tick_time   => 2,
             current_spot      => 0.5,
-            current_spot_time => 1,
             date_expiry       => 3,
             is_sold           => 0,
-            buy_price         => 5.15
+            current_spot_time => 0,
+            buy_price         => 5.15,
+            contract_id       => 12345
         },
         msg_type => "proposal_open_contract"
     };
+    my $stash = {};
     # No repsonse if entry_tick > current_spot_time
-    my $reply = forward_ws_response({}, $creds->{chat_id}, encode_json($response));
-    ok(!$reply) or diag "proposal_open_contract: Expected no response but got response";
+    my $reply = forward_ws_response($stash, $creds->{chat_id}, encode_json($response));
+    ok(!$reply->{text}) or diag "proposal_open_contract: Expected no response but got response";
     # Normal response
     $response->{proposal_open_contract}->{current_spot_time} = 2;
-    $reply = forward_ws_response({}, $creds->{chat_id}, encode_json($response));
-    ok($reply->{text} eq "Current spot: *0.5*") or diag "proposal_open_contract: Wrong current spot";
+    $reply = forward_ws_response($stash, $creds->{chat_id}, encode_json($response));
+    is($reply->{text}, "Tick #1: 0.*5*    1970-01-01 07:30:02", "proposal_open_contract: Wrong current spot");
     # Response for exit spot.
     $response->{proposal_open_contract}->{current_spot_time} = 3;
-    $reply = forward_ws_response({}, $creds->{chat_id}, encode_json($response));
-    ok(index($reply->{text}, "Exit spot: *0.5*") != -1) or diag "proposal_open_contract: Wrong Exit spot";
+    $reply = forward_ws_response($stash, $creds->{chat_id}, encode_json($response));
+    is($reply->{text}, "Tick #2: 0.*5*    1970-01-01 07:30:03", "proposal_open_contract: Wrong Exit spot");
     # Response for sold_contracts which won.
     $response->{proposal_open_contract}->{is_sold}    = 1;
     $response->{proposal_open_contract}->{sell_price} = 10;
-    $reply = forward_ws_response({}, $creds->{chat_id}, encode_json($response));
-    ok(index($reply->{text}, "You won a payout of USD 10") != -1) or diag "proposal_open_contract: Wrong message for sold contracts";
+    $reply = forward_ws_response($stash, $creds->{chat_id}, encode_json($response));
+    is($reply->{text}, "Tick #3: 0.*5*    1970-01-01 07:30:03\n\nYou won USD 4.85.", "proposal_open_contract: Check message for sold contracts");
     $response->{proposal_open_contract}->{sell_price} = 0;
-    $reply = forward_ws_response({}, $creds->{chat_id}, encode_json($response));
-    ok(index($reply->{text}, "You lost USD 5.15") != -1) or diag "proposal_open_contract: Wrong message for sold contracts";
+    $reply = forward_ws_response($stash, $creds->{chat_id}, encode_json($response));
+    ok(index($reply->{text}, "You lost USD 5.15") != -1) or diag "proposal_open_contract: Check message for sold contracts";
 }
 
 start();
