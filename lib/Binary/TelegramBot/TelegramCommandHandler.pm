@@ -55,7 +55,8 @@ sub buy {
     return if $stash->{processed_buy_req}->{$args[0]}
         || $stash->{$chat_id}->{processing_buy_req};
 
-    $stash->{processed_buy_req}->{$chat_id} = 1;
+    $stash->{processed_buy_req}->{$args[0]} = 1;
+    $stash->{$chat_id}->{processing_buy_req} = 1;
 
     send_message({
             chat_id => $chat_id,

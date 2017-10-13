@@ -70,9 +70,6 @@ sub buy {
         "Your new balance: $currency $balance\n" .
         "Your contract-id: $contract_id";
 
-    # Store buy request in stash.
-    $stash->{$chat_id}->{processing_buy_req} = 1;
-
     return {
         chat_id => $chat_id,
         text    => $msg
