@@ -15,9 +15,6 @@ my $app_id = "6660";
 my $ws_url = "wss://ws.binaryws.com/websockets/v3?app_id=$app_id";
 my $ua     = Mojo::UserAgent->new;
 $ua = $ua->inactivity_timeout(60);    #Close connection in 30 seconds
-my $tx_hash         = {};
-my $future_hash     = {};
-my $queued_requests = ();
 
 # Preping database.
 set_table("users");
@@ -28,11 +25,12 @@ sub send_ws_request {
     my ($stash, $chat_id, $req, $cb) = @_;
     my $future = Future->new;
     my $req_id = $stash->{req_id};
+    my $queued_requests = $stash->{queued_requests};
     $req->{req_id} = $req_id;
-    $future_hash->{$chat_id}->{$req_id} = $future;
-    $future_hash->{$chat_id}->{$req_id} = $cb if $cb;
+    $stash->{future_hash}->{$chat_id}->{$req_id} = $future;
+    $stash->{future_hash}->{$chat_id}->{$req_id} = $cb if $cb;
 
-    if (!$tx_hash->{$chat_id}->{tx}) {
+    if (!$stash->{tx_hash}->{$chat_id}->{tx}) {
         if (!$req->{authorize} && !$req->{logout}) {
             push @$queued_requests,
                 {
@@ -55,7 +53,7 @@ sub send_ws_request {
 sub on_connct {
     my ($stash, $chat_id, $tx) = @_;
     print "Connected\n";
-    $tx_hash->{$chat_id}->{tx} = $tx;
+    $stash->{tx_hash}->{$chat_id}->{tx} = $tx;
     send_queued_requests($stash, $chat_id);
 }
 
@@ -64,12 +62,12 @@ sub on_msg {
     return if !$msg;
     my $resp_obj = decode_json($msg);
     my $req_id   = $resp_obj->{req_id};
-    if (ref($future_hash->{$chat_id}->{$req_id}) eq "Future") {
-        $future_hash->{$chat_id}->{$req_id}->done($msg);
+    if (ref($stash->{future_hash}->{$chat_id}->{$req_id}) eq "Future") {
+        $stash->{future_hash}->{$chat_id}->{$req_id}->done($msg);
     }
     # For subscribe requests.
-    if (ref($future_hash->{$chat_id}->{$req_id}) eq "CODE") {
-        $future_hash->{$chat_id}->{$req_id}->($chat_id, $msg);
+    if (ref($stash->{future_hash}->{$chat_id}->{$req_id}) eq "CODE") {
+        $stash->{future_hash}->{$chat_id}->{$req_id}->($chat_id, $msg);
     }
     # Save token for future references.
     if ($resp_obj->{msg_type} eq "authorize" && !$resp_obj->{error}) {
@@ -86,8 +84,9 @@ sub on_msg {
 
 sub authorize {
     my ($stash, $chat_id, $req) = @_;
+    my $queued_requests = $stash->{queued_requests};
     $req->{passthrough} = {reauthorizing => 1} if row_exists($chat_id);
-    if (!$tx_hash->{$chat_id}->{tx}) {
+    if (!$stash->{tx_hash}->{$chat_id}->{tx}) {
         push @$queued_requests,
             {
             chat_id => $chat_id,
@@ -96,7 +95,7 @@ sub authorize {
             };
         open_websocket($stash, $chat_id);
     } else {
-        my $tx = $tx_hash->{$chat_id}->{tx};
+        my $tx = $stash->{tx_hash}->{$chat_id}->{tx};
         _send($stash, $chat_id, $req);
     }
 }
@@ -119,8 +118,8 @@ sub open_websocket {
                 finish => sub {
                     print 'Connection closed' . "\n";
                     my ($tx, $msg) = @_;
-                    $tx_hash->{$chat_id}->{tx}         = undef;
-                    $tx_hash->{$chat_id}->{authorized} = 0;
+                    delete $stash->{tx_hash}->{$chat_id}->{tx};
+                    $stash->{tx_hash}->{$chat_id}->{authorized} = 0;
                 });
             on_connct($stash, $chat_id, $tx);
         });
@@ -129,19 +128,20 @@ sub open_websocket {
 
 sub _send {
     my ($stash, $chat_id, $req) = @_;
-    my $tx = $tx_hash->{$chat_id}->{tx};
+    my $tx = $stash->{tx_hash}->{$chat_id}->{tx};
     $stash->{req_id}++;
     $tx->send(encode_json($req));
 }
 
 sub send_queued_requests {
     my ($stash, $chat_id) = @_;
+    my $queued_requests = $stash->{queued_requests};
     my $length  = scalar @$queued_requests;
     for (my $i = 0; $i < $length; $i++) {
         if (@$queued_requests[$i] && @$queued_requests[$i]->{chat_id} == $chat_id) {
-            my $tx  = $tx_hash->{$chat_id}->{tx};
+            my $tx  = $stash->{tx_hash}->{$chat_id}->{tx};
             my $req = @$queued_requests[$i]->{req};
-            if (@$queued_requests[$i]->{auth} == 1 && $tx_hash->{$chat_id}->{authorized}) {
+            if (@$queued_requests[$i]->{auth} == 1 && $stash->{tx_hash}->{$chat_id}->{authorized}) {
                 _send($stash, $chat_id, $req);
                 splice @$queued_requests, $i, 1;
             } elsif (!@$queued_requests[$i]->{auth}) {
@@ -168,7 +168,7 @@ sub get_property {
 #It pretty much just updates the state
 sub update_state {
     my ($stash, $chat_id, $resp) = @_;
-    $tx_hash->{$chat_id}->{authorized} = 1;
+    $stash->{tx_hash}->{$chat_id}->{authorized} = 1;
     if (row_exists($chat_id)) {
         update($chat_id, "token",    $resp->{echo_req}->{authorize});
         update($chat_id, "loginid",  $resp->{authorize}->{loginid});
@@ -181,7 +181,7 @@ sub update_state {
 
 sub delete_state {
     my ($stash, $chat_id, $resp) = @_;
-    delete $tx_hash->{$chat_id};
+    delete $stash->{tx_hash}->{$chat_id};
     delete_row($chat_id) if row_exists($chat_id);
 }
 

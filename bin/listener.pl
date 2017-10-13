@@ -7,7 +7,11 @@ use lib "$FindBin::Bin/../lib";
 use Binary::TelegramBot::TelegramCommandHandler qw(process_message);
 
 my $stash = {
-    req_id => 1
+    req_id            => 1,
+    processed_buy_req => {},
+    future_hash       => {},
+    queued_requests   => [],
+    tx_hash           => {} 
 };
 
 app->config(
