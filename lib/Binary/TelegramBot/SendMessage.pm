@@ -42,6 +42,7 @@ sub send_message {
             #todo better error handling.
             my $result = decode_json($tx->result->body);
             if ($result->{error_code}) {
+                print Dumper $reply;
                 print "$result->{description}\n";
                 $future->fail($result->{description});
                 return;
