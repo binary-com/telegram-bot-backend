@@ -24,8 +24,9 @@ sub forward_ws_response {
 
     return if !$resp;
 
-    $resp = escape_markdown($resp);
     $resp = decode_json($resp);
+    $resp = escape_markdown($resp);
+
     if ($resp->{error}) {
         return $process_ws_resp->{error}->($stash, $chat_id, $resp->{error}->{message});
     } else {
@@ -149,7 +150,20 @@ sub proposal_open_contract {
 
 sub escape_markdown {
     my $resp = shift;
-    $resp =~ s/([\*\_])/\\$1/g;
+    if (ref($resp) eq "ARRAY") {
+        my @arr = @$resp;
+        foreach (@arr) {
+            $_ = escape_markdown($_);
+        }
+        $resp = \@arr;
+    } elsif (ref($resp) eq "HASH") {
+        foreach (keys %$resp) {
+            $resp->{$_} = escape_markdown($resp->{$_});
+        }
+    } else {
+        $resp =~ s/([\*\_])/\\$1/g;
+    }
+
     return $resp;
 }
 
