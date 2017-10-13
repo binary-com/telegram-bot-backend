@@ -81,7 +81,7 @@ sub buy {
 
 sub logout {
     my ($stash, $chat_id) = @_;
-    if is_authenticated($chat_id){
+    if (is_authenticated($chat_id)) {
         send_ws_response_on_ready($stash, $chat_id, {logout => 1});
     } else {
         send_un_authenticated_msg($chat_id);
