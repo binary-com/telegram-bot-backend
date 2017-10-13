@@ -162,7 +162,8 @@ sub escape_markdown {
         $resp = \@arr;
     } elsif (ref($resp) eq "HASH") {
         foreach (keys %$resp) {
-            $resp->{$_} = escape_markdown($resp->{$_});
+            # Do not modify msg_type because it is used for calling relative subroutines
+            $resp->{$_} = escape_markdown($resp->{$_}) unless $_ eq 'msg_type';
         }
     } else {
         $resp =~ s/([\*\_])/\\$1/g;
