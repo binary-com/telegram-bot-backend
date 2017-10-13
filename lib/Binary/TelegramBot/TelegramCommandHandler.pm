@@ -62,7 +62,7 @@ sub buy {
             text    => $response
         });
     my $future = send_ws_request(
-        $chat_id,
+        $stash, $chat_id,
         {
             buy   => $args[0],
             price => $args[1]});
@@ -141,7 +141,7 @@ sub subscribe_proposal {
     };
 
     send_ws_request(
-        $chat_id, $request,
+        $stash, $chat_id, $request,
         sub {
             my ($chat_id, $response) = @_;
             my $resp_obj = decode_json($response);
@@ -161,7 +161,7 @@ sub send_un_authenticated_msg {
 
 sub send_ws_response_on_ready {
     my ($stash, $chat_id, $request) = @_;
-    my $future = send_ws_request($chat_id, $request);
+    my $future = send_ws_request($stash, $chat_id, $request);
     on_ready($stash, $chat_id, $future);
 }
 
