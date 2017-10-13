@@ -56,7 +56,7 @@ sub buy {
     return if $stash->{processed_buy_req}->{$args[0]}
         || $stash->{$chat_id}->{processing_buy_req};
 
-    $stash->{processed_buy_req}->{$args[0]} = 1;
+    $stash->{processed_buy_req}->{$chat_id} = 1;
 
     send_message({
             chat_id => $chat_id,
@@ -167,7 +167,7 @@ sub on_ready {
     $future->on_ready(
         sub {
             my $response = $future->get;
-            my $reply = forward_ws_response($chat_id, $response);
+            my $reply = forward_ws_response($stash, $chat_id, $response);
             send_message($reply);
         });
 }
