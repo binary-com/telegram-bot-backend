@@ -150,6 +150,10 @@ sub proposal_open_contract {
 
 sub escape_markdown {
     my $resp = shift;
+
+    # return  is $resp is not defined.
+    return unless defined($resp);
+
     if (ref($resp) eq "ARRAY") {
         my @arr = @$resp;
         foreach (@arr) {
