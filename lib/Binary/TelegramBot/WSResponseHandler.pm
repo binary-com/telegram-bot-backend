@@ -25,7 +25,7 @@ sub forward_ws_response {
     return if !$resp;
     $resp = decode_json($resp);
     if ($resp->{error}) {
-        return $process_ws_resp->{error}->($chat_id, $resp->{error}->{message});
+        return $process_ws_resp->{error}->($stash, $chat_id, $resp->{error}->{message});
     } else {
         my $msg_type = $resp->{msg_type};
         return $process_ws_resp->{$msg_type}->($stash, $chat_id, $resp->{$msg_type});
