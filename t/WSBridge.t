@@ -8,7 +8,9 @@ use Binary::TelegramBot::Helper::Await qw (await_response);
 use Binary::TelegramBot::WSBridge qw(send_ws_request is_authenticated get_property);
 use Data::Dumper;
 
-my $stash = {req_id => 1};
+my $stash = {req_id => 1,
+    queued_requests => [],
+};
 
 sub start {
     my $creds = {

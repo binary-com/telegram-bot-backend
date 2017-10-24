@@ -33,7 +33,7 @@ sub process_message {
         $commands->{$command} ? $commands->{$command}->($stash, $chat_id, $arguments, $msgid) : $commands->{'undef'}->($chat_id);
         return;
     }
-    $commands->{'undef'}->($chat_id);
+    $commands->{'undef'}->($stash, $chat_id);
 }
 
 sub balance {
