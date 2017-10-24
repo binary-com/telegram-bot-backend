@@ -30,7 +30,7 @@ sub process_message {
     if ($msg =~ m/^\/?([A-Za-z]+)\s?(.+)?/) {
         my $command   = lc($1);
         my $arguments = $2;
-        $commands->{$command} ? $commands->{$command}->($stash, $chat_id, $arguments, $msgid) : $commands->{'undef'}->($chat_id);
+        $commands->{$command} ? $commands->{$command}->($stash, $chat_id, $arguments, $msgid) : $commands->{'undef'}->($stash, $chat_id);
         return;
     }
     $commands->{'undef'}->($stash, $chat_id);
