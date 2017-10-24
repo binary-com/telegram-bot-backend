@@ -91,7 +91,7 @@ sub error {
 sub logout {
     return {
         chat_id => $_[1],
-        text    => 'You have been logged out.'
+        text    => 'You have been logged out.',
         reply_markup => {
             remove_keyboard => \1
         }

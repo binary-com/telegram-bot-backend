@@ -38,8 +38,7 @@ sub send_ws_request {
                 req     => $req,
                 auth    => 1
                 };
-            authorize($stash, $chat_id, {authorize => get_property($chat_id, "token")})
-                if row_exists($chat_id);
+            authorize($stash, $chat_id, {authorize => get_property($chat_id, "token")}) if row_exists($chat_id);
         } else {
             authorize($stash, $chat_id, $req);
         }

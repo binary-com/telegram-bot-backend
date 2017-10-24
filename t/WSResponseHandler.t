@@ -22,7 +22,7 @@ sub start {
 sub authorize {
     my $creds    = shift;
     my $req      = {authorize => $creds->{token}};
-    my $future   = send_ws_request($creds->{chat_id}, $req);
+    my $future   = send_ws_request({}, $creds->{chat_id}, $req);
     my $response = await_response($future);
     my $reply    = forward_ws_response({}, $creds->{chat_id}, $response);
 
